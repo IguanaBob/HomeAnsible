@@ -6,7 +6,7 @@
   strategy: linear
   tasks:
 
-    - name: Include update role
+    - name: Generate autoinstall for cloud-init
       include_role:
         name: autoinstall
         tasks_from: generate_autoinstall.yaml
