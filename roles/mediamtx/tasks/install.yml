@@ -1,0 +1,91 @@
+---
+- name: Install dependencies
+  ansible.builtin.package:
+    name:
+      - gstreamer1.0-tools
+      - gstreamer1.0-rtsp
+      - gstreamer1.0-alsa
+      - alsa-utils
+    state: present
+
+- name: Create MediaMTX user
+  ansible.builtin.user:
+    name: mediamtx
+    system: true
+    shell: /bin/false
+    comment: "User for running MediaMTX service"
+
+- name: Ensure MediaMTX user has access to the camera
+  ansible.builtin.command:
+    cmd: usermod -a -G video mediamtx
+    creates: /dev/null
+
+      #- name: Grant MediaMTX user access to camera devices
+      #  ansible.builtin.command:
+      #    cmd: setfacl -m u:mediamtx:rw /dev/video0
+      #    creates: /dev/null
+
+      #- name: Adjust ownership of MediaMTX binary and configuration
+      #  ansible.builtin.file:
+      #    path: "{{ item.path }}"
+      #    owner: mediamtx
+      #    group: mediamtx
+      #    mode: "{{ item.mode }}"
+      #  loop:
+      #    - { path: "/usr/local/bin/mediamtx", mode: '0755' }
+      #    - { path: "/usr/local/etc/mediamtx.yml", mode: '0644' }
+
+
+- name: Create log directory for MediaMTX
+  ansible.builtin.file:
+    path: /var/log/mediamtx
+    state: directory
+    mode: '0755'
+    owner: mediamtx
+    group: mediamtx
+
+- name: Copy MediaMTX binary from local files
+  ansible.builtin.copy:
+    src: files/mediamtx_v{{ mediamtx_version }}_linux_{{ mediamtx_arch }}
+    dest: /usr/local/bin/mediamtx
+    mode: '0755'
+    owner: root
+    group: root
+
+      #- name: Download and extract MediaMTX
+      #  ansible.builtin.get_url:
+      #    url: "https://github.com/bluenviron/mediamtx/releases/download/v{{ mediamtx_version }}/mediamtx_v{{ mediamtx_version }}_linux_{{ mediamtx_arch }}.tar.gz"
+      #    dest: "/tmp/mediamtx.tar.gz"
+
+      #- name: Extract MediaMTX binary
+      #  ansible.builtin.unarchive:
+      #    src: /tmp/mediamtx.tar.gz
+      #    dest: /usr/local/bin/
+      #    remote_src: yes
+
+- name: Copy MediaMTX configuration
+  ansible.builtin.template:
+    src: mediamtx_config.yaml.j2
+    dest: /usr/local/etc/mediamtx.yml
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Deploy systemd service for MediaMTX
+  ansible.builtin.copy:
+    src: mediamtx.service
+    dest: /etc/systemd/system/mediamtx.service
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start MediaMTX service
+  ansible.builtin.systemd:
+    name: mediamtx
+    enabled: yes
+    state: started
+
