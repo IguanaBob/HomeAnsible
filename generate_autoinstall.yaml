@@ -1,0 +1,12 @@
+---
+- name: test
+  hosts: all
+  become: true
+  gather_facts: false
+  strategy: linear
+  tasks:
+
+    - name: Include update role
+      include_role:
+        name: autoinstall
+        tasks_from: generate_autoinstall.yaml

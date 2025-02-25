@@ -1,0 +1,38 @@
+---
+
+- name: Create directory for autoinstalls
+  delegate_to: localhost
+  run_once: True
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  with_items:
+    - /var/www/html/autoinstall-gen
+    - /var/www/html/autoinstall-gen/{{ inventory_hostname }}
+
+- block:
+  # Server version
+
+    - name: Generate stub autoinstall files if this is a server version
+      copy:
+        content: ""
+        dest: "/var/www/html/autoinstall-gen/{{ inventory_hostname }}/{{ item }}"
+        owner: root
+        group: root
+        mode: "0664"
+      with_items:
+        - "meta-data"
+        - "vendor-data"
+
+    - name: Generate autoinstall scirpt
+      template:
+        dest: "/var/www/html/autoinstall-gen/{{ inventory_hostname }}/user-data"
+        src: user-data.j2
+
+  when: "'-server' in autoinstall_os"
+  delegate_to: localhost
+
+## Need section for desktop

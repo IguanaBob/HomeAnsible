@@ -1,0 +1,297 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  refresh-installer:
+    update: {{ autoinstall_refresh_installer | default("true") }}
+
+  source:
+    id: {{ autoinstall_os | default("ubuntu-server") }}
+    search_drivers: {{ autoinstall_search_drivers | default("true") }}
+
+  codecs:
+    install: {{ autoinstall_codecs | default("false") }}
+
+  drivers:
+    install: {{ autoinstall_drivers | default("true") }}
+
+  oem:
+    install: {{ autoinstall_oem | default("auto") }}
+
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  timezone: America/Chicago
+
+{% if enable_ssh is defined and enable_ssh %}
+  ssh:
+    install-server: true
+    allow-pw: false
+    authorized-keys: []
+{% endif %}
+
+  packages:
+    - vim
+    - less
+
+  identity:
+    hostname: {{ inventory_hostname }}
+    password: "{{ autoinstall_primary_user_password }}"
+    username: jon
+    realname: 'Jon'
+
+  user-data:
+    disable_root: false
+    users:
+      - name: svc_ansible
+        gecos: 'Ansible User'
+        primary_group: svc_ansible
+        groups: sudo
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        lock_passwd: true
+        uid: 60743
+        ssh_authorized_keys: 
+          - "{{ autoinstall_svc_ansible_key }}"
+
+  storage:
+    config:
+      - id: disk0
+        type: disk
+        ptable: gpt
+        wipe: superblock-recursive
+        match:
+{% if autoinstall_disk_match is defined %}
+          {{ autoinstall_disk_match }}
+{% else %}
+          size: largest
+{% endif %}
+
+      - id: efi
+        type: partition
+        size: 1073741824  # 1GB
+        device: disk0
+        flag: boot
+        wipe: superblock
+        grub_device: true
+
+      - id: boot
+        type: partition
+        size: 2147483648  # 2GB
+        device: disk0
+        wipe: superblock
+
+      - id: pvpart
+        type: partition
+        device: disk0
+        size: {{ autoinstall_partition_size | default(17179869184) }}  #Desktop can't use %. Start at 16GB and grow later.
+        wipe: superblock
+
+{% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
+      - id: pvpart-crypt
+        type: dm_crypt
+        volume: pvpart
+        key: "{{ autoinstall_luks_passphrase }}"
+{% endif %}
+
+      - id: vg0
+        type: lvm_volgroup
+        name: vg0
+        devices:
+{% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
+          - pvpart-crypt
+{% else %}
+          - pvpart
+{% endif %}
+
+      - id: swap_lv
+        type: lvm_partition
+        name: swap_lv
+        volgroup: vg0
+        size: 6442450944  # 6GB
+
+      - id: root_lv
+        type: lvm_partition
+        name: root_lv
+        volgroup: vg0
+        size: 6442450944
+        # For Desktop, can't use %
+        # For server, it's hard to predict how much swap will use as a percentage, so start small at 6GB and grow later.
+
+      - id: efipart_fs
+        type: format
+        volume: efi
+        fstype: fat32
+
+      - id: bootpart_fs
+        type: format
+        volume: boot
+        fstype: ext4
+
+      - id: root_lv_fs
+        type: format
+        volume: root_lv
+        fstype: btrfs
+
+      - id: swap-fs
+        type: format
+        volume: swap_lv
+        fstype: swap
+
+      # We need an BIOS version too
+      - id: efi-mount
+        type: mount
+        path: /boot/efi
+        device: efipart_fs
+        options: noatime,nodiratime
+
+      - id: boot-mount
+        type: mount
+        path: /boot
+        device: bootpart_fs
+        options: noatime,nodiratime
+
+      - id: swap-mount
+        type: mount
+        path: none
+        device: swap-fs
+
+      - id: root-mount
+        type: mount
+        path: /
+        device: root_lv_fs
+        options: compress-force=zstd:{{ btrfs_comp_high | default("3") }},ssd,noatime,nodiratime  #ssd/hdd check needed
+  late-commands:
+  - |
+    set -ex
+    
+    ### Luks TRIM
+    # cryptsetup --allow-discards --persistent refresh pvpart-crypt || (exit 0)  #requires keyboard input
+    sed -i "s/luks/luks,discard/" /target/etc/crypttab || (exit 0)
+    
+    ##### BTRFS Subvolumes #####
+    
+    ### Prep   
+    BOOT_DEV=/dev/sda2
+    EFI_DEV=/dev/sda1
+    ROOT_DEV=/dev/mapper/vg0-root_lv
+    ROOT_UUID=$(blkid -o value $ROOT_DEV | head -n 1)
+    sleep 10 || (exit 0)
+    umount /target/boot/efi || ( sleep 5 && umount /target/boot/efi || sleep 5 && ( umount -l /target/boot/efi || exit 0 ))
+    umount /target/boot || ( sleep 5 && umount /target/boot || sleep 5 && ( umount -l /target/boot || exit 0 ))
+    umount /target/cdrom || ( sleep 5 && umount /target/cdrom || sleep 5 && ( umount -l /target/cdrom || exit 0 ))
+    
+    ### /
+    btrfs subvolume snapshot /target /target/@   #OS
+    mkdir /mnt/rootfs
+    mount -o subvol=@ $ROOT_DEV /mnt/rootfs
+    mount $BOOT_DEV /mnt/rootfs/boot
+    mount $EFI_DEV /mnt/rootfs/boot/efi
+    mount -o bind /dev  /mnt/rootfs/dev
+    mount -o bind /sys  /mnt/rootfs/sys
+    mount -o bind /proc /mnt/rootfs/proc
+    sed -i "/$ROOT_UUID/s/compress-force=zstd:{{ btrfs_comp_high | default('3') }}/subvol=@,compress-force=zstd:{{ btrfs_comp_norm }}/" /mnt/rootfs/etc/fstab
+    chroot /mnt/rootfs update-grub
+    chroot /mnt/rootfs grub-install --efi-directory=/boot/efi
+    find /target -mindepth 1 -maxdepth 1 -not -name '@' -exec rm -rf '{}' \;
+    
+    ### /home
+    btrfs subvolume create /target/@home   #data
+    mv /mnt/rootfs/home/* /target/@home/ || (exit 0)
+    mount -o subvol=@home $ROOT_DEV /mnt/rootfs/home
+    echo "/dev/disk/by-uuid/$ROOT_UUID /home btrfs noatime,nodiratime,subvol=@home 0 0" >> /mnt/rootfs/etc/fstab
+    
+    #### /opt
+    btrfs subvolume create /target/@opt
+    mv /mnt/rootfs/opt/* /target/@opt/ || (exit 0)
+    mount -o subvol=@opt $ROOT_DEV /mnt/rootfs/opt
+    echo "/dev/disk/by-uuid/$ROOT_UUID /opt btrfs noatime,nodiratime,subvol=@opt 0 0" >> /mnt/rootfs/etc/fstab
+    
+    #### /srv
+    btrfs subvolume create /target/@srv
+    mv /mnt/rootfs/srv/* /target/@srv/ || (exit 0)
+    mount -o subvol=@srv $ROOT_DEV /mnt/rootfs/srv
+    echo "/dev/disk/by-uuid/$ROOT_UUID /srv btrfs noatime,nodiratime,subvol=@srv 0 0" >> /mnt/rootfs/etc/fstab
+    
+    #### /usr/local
+    btrfs subvolume create /target/@usr_local
+    mv /mnt/rootfs/usr/local/* /target/@usr_local/ || (exit 0)
+    mount -o subvol=@usr_local $ROOT_DEV /mnt/rootfs/usr/local
+    echo "/dev/disk/by-uuid/$ROOT_UUID /usr/local btrfs noatime,nodiratime,subvol=@usr_local 0 0" >> /mnt/rootfs/etc/fstab
+    
+    ### /var
+    btrfs subvolume create /target/@var
+    btrfs subvolume create /target/@var_cache
+    btrfs subvolume create /target/@var_log_journal
+    btrfs subvolume create /target/@var_log
+    btrfs subvolume create /target/@var_opt
+    btrfs subvolume create /target/@var_snap
+    btrfs subvolume create /target/@var_mail
+    btrfs subvolume create /target/@var_spool
+    mv /mnt/rootfs/var/cache/* /target/@var_cache/ || (exit 0)
+    mv /mnt/rootfs/var/log/journal/* /target/@var_log_journal/ || (exit 0)
+    mv /mnt/rootfs/var/log/* /target/@var_log/ || (exit 0)
+    mv /mnt/rootfs/var/opt/* /target/@var_opt/ || (exit 0)
+    mv /mnt/rootfs/var/snap/* /target/@var_snap/ || (exit 0)
+    mv /mnt/rootfs/var/mail/* /target/@var_mail/ || (exit 0)
+    mv /mnt/rootfs/var/spool/* /target/@var_spool/ || (exit 0)
+    mv /mnt/rootfs/var/* /target/@var/ || (exit 0)    
+    mount -o subvol=@var $ROOT_DEV /mnt/rootfs/var/ 
+    mount -o subvol=@var_cache $ROOT_DEV /mnt/rootfs/var/cache
+    mount -o subvol=@var_log $ROOT_DEV /mnt/rootfs/var/log
+    mount -o subvol=@var_log_journal $ROOT_DEV /mnt/rootfs/var/log/journal
+    mount -o subvol=@var_opt $ROOT_DEV /mnt/rootfs/var/opt
+    mount -o subvol=@var_snap $ROOT_DEV /mnt/rootfs/var/snap
+    mount -o subvol=@var_mail $ROOT_DEV /mnt/rootfs/var/mail
+    mount -o subvol=@var_spool $ROOT_DEV /mnt/rootfs/var/spool
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var btrfs noatime,nodiratime,subvol=@var 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/cache btrfs noatime,nodiratime,subvol=@var_cache 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/log btrfs noatime,nodiratime,subvol=@var_log 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/log/journal btrfs noatime,nodiratime,subvol=@var_log_journal 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/opt btrfs noatime,nodiratime,subvol=@var_opt 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/snap btrfs noatime,nodiratime,subvol=@var_snap 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/mail btrfs noatime,nodiratime,subvol=@var_mail 0 0" >> /mnt/rootfs/etc/fstab
+    echo "/dev/disk/by-uuid/$ROOT_UUID /var/spool btrfs noatime,nodiratime,subvol=@var_spool 0 0" >> /mnt/rootfs/etc/fstab
+    
+    ##### Custom configuration #####
+    
+    ### Aliases
+    echo "alias cp='cp --reflink=auto'" >> /mnt/rootfs/root/.bash_aliases || (exit 0)
+    echo "alias cp='cp --reflink=auto'" >> /mnt/rootfs/etc/skel/.bash_aliases || (exit 0)
+    # echo "alias cp='cp --reflink=auto'" >> /mnt/rootfs/home/jon/.bash_aliases || (exit 0)
+    # echo "alias cp='cp --reflink=auto'" >> /mnt/rootfs/home/svc_ansible/.bash_aliases || (exit 0)
+    # chroot /mnt/rootfs chown jon: /home/jon/.bash_aliases || (exit 0)
+    
+    ### Remove cloud-init
+    ### This breaks user creation
+    # touch /mnt/rootfs/etc/cloud/cloud-init.disabled || (exit 0)
+    # chroot /mnt/rootfs apt purge cloud-init -y || (exit 0)
+    # rm -rf /mnt/rootfs/etc/cloud /mnt/rootfs/var/lib/cloud || (exit 0)
+    
+    ### Disable ubuntu-advantage & ESM nags
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/ua-messaging.timer || (exit 0)
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/ua-messaging.service || (exit 0)
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/ua-timer.timer || (exit 0)
+    chroot /mnt/rootfs pro config set apt_news=false || (exit 0)  #only desktop???
+    truncate -s 0 /mnt/rootfs/etc/apt/apt.conf.d/20apt-esm-hook.conf || (exit 0)
+    truncate -s 0 /mnt/rootfs/etc/ubuntu-advantage/help_data.yaml || (exit 0)
+    truncate -s 0 /mnt/rootfs/etc/update-motd.d/50-motd-news || (exit 0)
+    truncate -s 0 /mnt/rootfs/etc/update-motd.d/88-esm-announce || (exit 0)
+    truncate -s 0 /mnt/rootfs/etc/update-motd.d/91-contract-ua-esm-status || (exit 0)
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/esm-cache.service || (exit 0)
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/reboot-cmds.service || (exit 0)
+    ln -s /dev/null /mnt/rootfs/etc/systemd/system/apt-news.service || (exit 0)
+    touch /mnt/rootfs/root/.hushlogin || (exit 0)
+    touch /mnt/rootfs/etc/skel/.hushlogin || (exit 0)
+    # touch /mnt/rootfs/home/jon/.hushlogin || (exit 0)
+    # chroot /mnt/rootfs chown jon: /home/jon/.hushlogin || (exit 0)
+    # - Add something to append rd.luks.options=discard to CMD DEFAULT, then run update-initramfs -c -k all and update-grub
+    # - remote ubuntu-pro-client package? Dependency issues. 
+    # what is sgtlauncher
+    
+    ### Cleanup
+    chroot /mnt/rootfs apt autoremove -y || (exit 0)
+    umount /target/ && mkdir -p /target/var/log/ && mount -o subvol=@var_log $ROOT_DEV /target/var/log/  # needed for installer logs
+    fstrim -v /mnt/rootfs || (exit 0)
+    
+    poweroff
