@@ -1,0 +1,9 @@
+---
+- name: Remount / to restore compression level
+  ansible.posix.mount:
+    path: /
+    state: remounted
+  when: >
+    (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | list | first) is defined
+    and
+    (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | list | first == 'btrfs')

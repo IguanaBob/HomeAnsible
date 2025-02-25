@@ -1,0 +1,16 @@
+---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: >
+    ansible_facts is not defined
+    or ansible_facts.packages is not defined
+    or force_gather_package_facts
+
+- name: Check for snapd (workaround for large package facts)
+  ansible.builtin.shell:
+    cmd: dpkg --list snapd
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  register: dpkg_snapd

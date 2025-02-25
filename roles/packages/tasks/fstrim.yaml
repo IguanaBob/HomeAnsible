@@ -1,0 +1,14 @@
+---
+- name: fstrim
+  ansible.builtin.shell:
+    cmd: fstrim -Av
+  register: fstrim
+  changed_when: >
+    ( fstrim.stdout | regex_search('[1-9]+ bytes\) trimmed') )
+    or
+    ( fstrim.stdout | regex_search('[0-9]+0 bytes\) trimmed') )
+
+- name: fstrim output
+  debug:
+    msg: "{{ fstrim.stdout_lines }}"
+

@@ -1,0 +1,11 @@
+---
+- name: test
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Include update role
+      include_role:
+        name: packages
+        tasks_from: update.yaml

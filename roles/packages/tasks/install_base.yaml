@@ -1,0 +1,11 @@
+---
+- include_tasks: prep.yaml
+
+- include_tasks: upcompression.yaml
+
+- name: Install/update base packages
+  package:
+    state: latest
+    name: '{{ base_packages }}'
+
+- include_tasks: remount.yaml

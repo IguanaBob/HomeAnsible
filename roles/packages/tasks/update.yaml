@@ -1,0 +1,19 @@
+---
+- include_tasks: prep.yaml
+
+- include_tasks: upcompression.yaml
+
+- include_tasks: snap.yaml
+  when: |
+    ( ansible_facts.packages['snapd'] | default(false) | bool )
+    or ( dpkg_snapd is defined and dpkg_snapd.rc is defined and dpkg_snapd.rc == 0 )
+
+- include_tasks: apt.yaml
+  when: ansible_facts.packages['apt']
+
+- include_tasks: remount.yaml
+
+### need dnf/yum equiv
+
+- name: fstrim
+  include_tasks: fstrim.yaml

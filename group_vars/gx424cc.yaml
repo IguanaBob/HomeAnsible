@@ -1,0 +1,8 @@
+---
+# Settings tested as best for:
+# AMD GX-424CC SOC with Radeon(TM) R5E Graphics
+# Dell Wyse Thin Client Desktop 5060
+# We may want to just detect the CPU later, but for now I have manual groups.
+
+btrfs_comp_norm: 1
+btrfs_comp_high: 2

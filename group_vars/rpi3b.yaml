@@ -1,0 +1,7 @@
+---
+# Settings tested as best for:
+# Raspberry Pi 3 Rev B
+# We may want to just detect the CPU later, but for now I have manual groups.
+
+btrfs_comp_norm: 1
+btrfs_comp_high: 3

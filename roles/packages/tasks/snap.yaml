@@ -1,0 +1,21 @@
+---
+- block:
+
+    - name: Update snaps
+      ansible.builtin.shell:
+        cmd: snap refresh
+      register: snap_refresh
+      changed_when:
+        - snap_refresh.rc == 0
+        - '"All snaps up to date" not in snap_refresh.stderr'
+
+    - name: snap output
+      debug:
+        msg: "{{ snap_refresh.stderr_lines }}"
+
+  when:
+    - ansible_facts is defined
+    - ansible_facts.packages is defined
+    - ansible_facts.packages['snapd'] is defined
+    - ansible_facts.packages['snapd']
+    - ( dpkg_snapd is defined and dpkg_snapd.rc is defined and dpkg_snapd.rc == 0 )

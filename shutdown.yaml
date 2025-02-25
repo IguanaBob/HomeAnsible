@@ -1,0 +1,11 @@
+---
+#Power off system
+- name: Shutdown system
+  hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+
+    - name: Shut down system
+      community.general.shutdown:
+        delay: 5
