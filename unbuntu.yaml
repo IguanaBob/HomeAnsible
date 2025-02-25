@@ -1,0 +1,12 @@
+---
+- name: De-bloat Ubuntu
+  hosts: all
+  become: true
+  gather_facts: true
+  strategy: linear
+  tasks:
+
+    - name: Include update role
+      include_role:
+        name: debloat
+        tasks_from: unbuntu.yaml

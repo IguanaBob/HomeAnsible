@@ -1,0 +1,91 @@
+---
+- name: Gather service facts
+  service_facts:
+
+
+- name: Define services to manage
+  set_fact:
+    udisks2_service: udisks2
+    ubuntu_advantage_services:
+      - ua-timer.timer
+      - ua-timer.service
+      - ubuntu-advantage.servic
+      - ua-messaging.timer  # 22.04
+      - ua-messaging.service  # 22.04
+      - ua-timer.timer  # 22.04
+    esm_services:
+      - esm-cache.service
+      - ua-reboot-cmds.service
+      - apt-news.service
+      - reboot-cmds.service  # 22.04
+    default_file_permissions: "0644"
+
+
+- name: Check if cloud-init is installed
+  shell: dpkg -l | grep -qw cloud-init
+  register: cloud_init_installed
+  failed_when: false
+  changed_when: false
+
+- name: Set datasources to None in debconf for cloud-init
+  debconf:
+    name: cloud-init
+    question: cloud-init/datasources
+    value: 'None'
+    vtype: multiselect
+  when: cloud_init_installed.rc == 0
+
+- name: Purge cloud-init from apt
+  apt:
+    pkg: cloud-init
+    purge: true
+    state: absent
+  when: cloud_init_installed.rc == 0
+
+- name: Remove /etc/cloud and /var/lib/cloud
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+    - /etc/cloud/
+    - /var/lib/cloud/
+
+
+- name: Manage services (disable and mask if exist)
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop: "{{ ubuntu_advantage_services + esm_services + [udisks2_service] }}"
+  loop_control:
+    label: "{{ item }}"
+  when: "item in ansible_facts.services"
+  tags: manage_services
+
+- name: Truncate ESM files and set permissions
+  copy:
+    content: ""
+    dest: "{{ item.filename }}"
+    mode: "{{ item.perms | default(default_file_permissions) }}"
+    owner: "root"
+    group: "root"
+  loop:
+    - {"filename": "/etc/apt/apt.conf.d/20apt-esm-hook.conf"}
+    - {"filename": "/etc/ubuntu-advantage/help_data.yaml"}
+    - {"filename": "/etc/update-motd.d/50-motd-news"}
+    - {"filename": "/etc/update-motd.d/88-esm-announce"}
+    - {"filename": "/etc/update-motd.d/91-contract-ua-esm-status"}
+    - {"filename": "/root/.hushlogin"}
+    - {"filename": "/etc/skel/.hushlogin"}
+    - {"filename": "/home/slickwatersprings/.hushlogin"}
+  register: truncate_esm_file
+  failed_when:
+    - truncate_esm_file.changed is defined
+    - not truncate_esm_file.changed
+    - truncate_esm_file.msg is defined
+    - "'Destination directory' not in truncate_esm_file.msg"
+    - "'does not exist' not in truncate_esm_file.msg"
+  tags: truncate_files
+  vars:
+    mitogen_task_isolation: fork
