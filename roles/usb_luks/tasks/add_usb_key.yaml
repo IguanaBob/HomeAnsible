@@ -61,6 +61,6 @@
 - name: Update crypttab with key device
   ansible.builtin.lineinfile:
     path: /etc/crypttab
-    line: "pvpart-crypt UUID={{ luks_device_uuid }} /dev/disk/by/uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key {{ crypttab_options }}"
+    line: "pvpart-crypt UUID={{ luks_device_uuid }} /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key {{ crypttab_options }}"
     regexp: "^pvpart-crypt UUID"
   notify: update_initramfs
