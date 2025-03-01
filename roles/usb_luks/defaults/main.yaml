@@ -1,2 +1,4 @@
 ---
 luks_mapper_device: "/dev/mapper/pvpart-crypt"
+crypttab_options: "luks,discard,keyscript=/lib/cryptsetup/scripts/passdev"
+luks_pv_name: "pvpart-crypt"
