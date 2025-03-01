@@ -1,0 +1,11 @@
+---
+- name: Add USB keyfile to LUKS
+  hosts: all
+  become: True
+  gather_facts: False
+  strategy: mitogen_linear
+  tasks:
+    - name: Add USB keyfile to LUKS
+      include_role:
+        name: usb_luks
+        tasks_from: add_usb_key.yaml

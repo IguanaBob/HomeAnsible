@@ -1,0 +1,2 @@
+---
+luks_mapper_device: "/dev/mapper/pvpart-crypt"

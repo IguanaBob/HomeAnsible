@@ -1,0 +1,66 @@
+---
+# TODO: Allow for specifying the luks disk rather than assuming pvpart-crypt to allow for flexibility
+
+# NOTE: Per the docs, the luks_device options for remove_passphrase, new_passphrase, and new_keyfile
+# are only idepotent since community.crypto 1.4.0!
+
+# TODO: Find a way to check if the correct key is installed before copying it to the system /dev/shm
+
+- name: Read vars file to get LUKS passphrase
+  include_vars: "{{ inventory_hostname }}.yaml"
+
+- name: Read /etc/crypttab
+  ansible.builtin.slurp:
+    src: /etc/crypttab
+  register: crypttab_file
+
+- name: Find disk UUID from crypttab
+  ansible.builtin.set_fact:
+    luks_device_uuid: "{{ crypttab_file['content'] | b64decode | regex_search('pvpart-crypt[ \\t]+UUID=([a-fA-F0-9-]+)', '\\1') | first | string }}"
+
+- name: Add passphrase to luks
+  community.crypto.luks_device:
+    device: "/dev/disk/by-uuid/{{ luks_device_uuid }}"
+    new_passphrase: "{{ luks_passphrase }}"
+    passphrase: "{{ luks_old_passphrase }}"
+  no_log: True
+
+- name: Remove deployment passphrase
+  community.crypto.luks_device:
+    device: "/dev/disk/by-uuid/{{ luks_device_uuid }}"
+    remove_passphrase: "{{ luks_old_passphrase }}"
+  no_log: True
+
+- name: Create temp file for key storage
+  ansible.builtin.tempfile:
+    state: file
+    path: "/dev/shm"
+  register: temp_key_file
+
+- name: Copy luks key to temporary file
+  ansible.builtin.copy:
+    src: "{{ inventory_hostname }}.key"
+    dest: "{{ temp_key_file.path }}"
+    owner: root
+    group: root
+    mode: "0400"
+
+- name: Add key to LUKS
+  community.crypto.luks_device:
+    device: "/dev/disk/by-uuid/{{ luks_device_uuid }}"
+    new_keyfile: "{{ temp_key_file.path }}"
+    passphrase: "{{ luks_passphrase }}"
+  notify: update_initramfs
+  no_log: True
+
+- name: Delete temporary keyfile
+  ansible.builtin.file:
+    path: "{{ temp_key_file.path }}"
+    state: absent
+
+- name: Update crypttab with key device
+  ansible.builtin.lineinfile:
+    path: /etc/crypttab
+    line: "pvpart-crypt UUID={{ luks_device_uuid }} /dev/disk/by/uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key {{ crypttab_options }}"
+    regexp: "^pvpart-crypt UUID"
+  notify: update_initramfs
