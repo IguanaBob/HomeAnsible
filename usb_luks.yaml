@@ -4,6 +4,8 @@
   become: True
   gather_facts: False
   strategy: mitogen_linear
+  vars_files:
+    - "{{ inventory_hostname }}.yaml"
   tasks:
     - name: Add USB keyfile to LUKS
       include_role:

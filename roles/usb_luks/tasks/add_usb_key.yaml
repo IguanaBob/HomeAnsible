@@ -1,13 +1,10 @@
 ---
-# TODO: Allow for specifying the luks disk rather than assuming pvpart-crypt to allow for flexibility
-
 # NOTE: Per the docs, the luks_device options for remove_passphrase, new_passphrase, and new_keyfile
 # are only idepotent since community.crypto 1.4.0!
 
+# TODO: Allow for specifying the luks disk rather than assuming pvpart-crypt to allow for flexibility
 # TODO: Find a way to check if the correct key is installed before copying it to the system /dev/shm
-
-- name: Read vars file to get LUKS passphrase
-  include_vars: "{{ inventory_hostname }}.yaml"
+# TODO: Have autoinstall generate and install the key
 
 - name: Read /etc/crypttab
   ansible.builtin.slurp:
