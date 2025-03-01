@@ -3,16 +3,22 @@
   hosts: all
   become: True
   gather_facts: False
-  vars:
-    ansible_ssh_extra_args: "-o StrictHostKeyChecking=accept-new"
   strategy: linear
   tasks:
-
     - name: Wipe host's SSH key from localhost's known_hosts file
       ansible.builtin.known_hosts:
         name: "{{ ansible_host }}"
         state: absent
       delegate_to: localhost
-    
+
+- name: Connect once to retrieve new key
+  hosts: all
+  become: True
+  gather_facts: False
+  vars:
+    ansible_ssh_extra_args: "-o StrictHostKeyChecking=accept-new"
+  strategy: linear
+  tasks:
+
     - name: Connect once to retrieve new key
       ansible.builtin.setup:
