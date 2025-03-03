@@ -294,13 +294,19 @@ autoinstall:
     # Reuses existing key rather than overwriting.
     mkdir /mnt/usbkey
     mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid }} /mnt/usbkey
+    if [ ! -f /mnt/usbkey/autoinstaller.key ]; then
+      # Default passphrase file does not exist, save it.
+      mount -o rw,remount /mnt/usbkey
+      echo -n "{{ autoinstall_luks_passphrase }}" > /mnt/usbkey/autoinstaller.key
+      mount -o ro,remount /mnt/usbkey || (exit 0)
+    fi
     if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
       # Key does not exist, generate it.
       mount -o rw,remount /mnt/usbkey
       dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
       mount -o ro,remount /mnt/usbkey || (exit 0)
     fi
-     echo -n "{{ autoinstall_luks_passphrase }}" | cryptsetup luksAddKey --key-file=- /dev/sda3 /mnt/usbkeys/{{ inventory_hostname }}.key
+    cryptsetup luksAddKey --key-file=/mnt/usbkey/autoinstaller.key /dev/sda3 /mnt/usbkeys/{{ inventory_hostname }}.key  # Can't seem to read from stdin in autoinstaller, so read from file for now
     sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
     chroot /mnt/rootfs update-initramfs -k all -u
 {% endif %}
