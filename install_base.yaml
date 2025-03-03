@@ -1,0 +1,11 @@
+---
+- name: Install base packages
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Install base packages
+      include_role:
+        name: packages
+        tasks_from: install_base.yaml
