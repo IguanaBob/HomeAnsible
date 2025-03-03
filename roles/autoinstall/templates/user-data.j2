@@ -2,6 +2,22 @@
 autoinstall:
   version: 1
 
+  early-commands:
+  - |
+    echo "EARLY COMMANDS"
+{% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
+    # LUKS key USB
+    # Reuses existing key rather than overwriting.
+    mkdir /mnt/usbkey
+    mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid }} /mnt/usbkey
+    if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
+      # Key does not exist, generate it.
+      mount -o rw,remount /mnt/usbkey
+      dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
+      mount -o ro,remount /mnt/usbkey || (exit 0)
+    fi
+{% endif %}
+
   refresh-installer:
     update: {{ autoinstall_refresh_installer | default("true") }}
 
@@ -29,10 +45,6 @@ autoinstall:
     allow-pw: false
     authorized-keys: []
 {% endif %}
-
-  packages:
-    - vim
-    - less
 
   identity:
     hostname: {{ inventory_hostname }}
@@ -91,7 +103,7 @@ autoinstall:
       - id: pvpart-crypt
         type: dm_crypt
         volume: pvpart
-        key: "{{ autoinstall_luks_passphrase }}"
+        keyfile: "/mnt/usbkey/{{ inventory_hostname }}.key"
 {% endif %}
 
       - id: vg0
@@ -164,10 +176,6 @@ autoinstall:
   late-commands:
   - |
     set -ex
-    
-    ### Luks TRIM
-    # cryptsetup --allow-discards --persistent refresh pvpart-crypt || (exit 0)  #requires keyboard input
-    #sed -i "s/luks/luks,discard/" /target/etc/crypttab || (exit 0)
     
     ##### BTRFS Subvolumes #####
     
@@ -291,22 +299,6 @@ autoinstall:
     
 {% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
     # LUKS key USB
-    # Reuses existing key rather than overwriting.
-    mkdir /mnt/usbkey
-    mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid }} /mnt/usbkey
-    if [ ! -f /mnt/usbkey/autoinstaller.key ]; then
-      # Default passphrase file does not exist, save it.
-      mount -o rw,remount /mnt/usbkey
-      echo -n "{{ autoinstall_luks_passphrase }}" > /mnt/usbkey/autoinstaller.key
-      mount -o ro,remount /mnt/usbkey || (exit 0)
-    fi
-    if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
-      # Key does not exist, generate it.
-      mount -o rw,remount /mnt/usbkey
-      dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
-      mount -o ro,remount /mnt/usbkey || (exit 0)
-    fi
-    cryptsetup luksAddKey --key-file=/mnt/usbkey/autoinstaller.key /dev/sda3 /mnt/usbkey/{{ inventory_hostname }}.key  # Can't seem to read from stdin in autoinstaller, so read from file for now
     sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
     chroot /mnt/rootfs update-initramfs -k all -u
 {% endif %}
