@@ -1,0 +1,63 @@
+#For now this only checks disks defined in variables btrfs_mounts, disks_by_id, lvs, vgs.
+#I plan to add automatic checks, as well as storing previously seen disks to detect removal/failure.
+
+---
+- name: Check disks
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+  tasks:
+
+    - name: Check status of LV
+      shell:
+        cmd: 'lvs {{ lv }} --binary -o "lv_name,data_copies,lv_active,raid_mismatch_count,raid_sync_action,sync_percent" --aligned --separator "|" --noheading | egrep "^\s*lv_cache_mirror\|\s*2\|active\|\s*0\|idle\s*\|100.00\s*$"'
+      register: lvs_output
+      with_items: "{{ lvs }}"
+      loop_control:
+        loop_var: lv
+      changed_when: false
+      when: lvs is defined
+
+    - name: Check status of VG
+      shell:
+        cmd: 'vgs {{ vg }} -o "pv_count,vg_missing_pv_count" --aligned --separator "|" --noheading | egrep "^\s*2\|\s*0\s*$"'
+      register: vgs_output
+      changed_when: false
+      with_items: "{{ vgs }}"
+      loop_control:
+        loop_var: vg
+      when: vgs is defined
+
+    - name: Check btrfs dev stats
+      shell:
+        cmd: 'btrfs dev stats {{ btrfs_mount }} --check'
+      register: btrfs_dev_stats
+      failed_when: not btrfs_dev_stats.rc == 0
+      changed_when: false
+      with_items: "{{ btrfs_mounts }}"
+      loop_control:
+        loop_var: btrfs_mount
+      when: btrfs_mounts is defined
+
+    - name: Check btrfs for missing disks
+      shell:
+        cmd: 'btrfs dev usage {{ btrfs_mount }} | grep -i "missing"'
+      register: btrfs_dev_usage_missing
+      failed_when: not btrfs_dev_usage_missing.rc == 1
+      changed_when: false
+      with_items: "{{ btrfs_mounts }}"
+      loop_control:
+        loop_var: btrfs_mount
+      when: btrfs_mounts is defined
+
+    - name: Check SMART for all disks
+      shell:
+        cmd: 'smartctl -H /dev/disk/by-id/{{ disk }}'
+      with_items: "{{ disks_by_id }}"
+      loop_control:
+        loop_var: disk
+      register: smartctl_h
+      changed_when: false
+      failed_when:  smartctl_h.rc != 0
+      when: disks_by_id is defined
