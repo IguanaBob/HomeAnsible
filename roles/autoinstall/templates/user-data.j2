@@ -298,7 +298,8 @@ autoinstall:
       # Key does not exist, generate it.
       mount -o rw,remount /mnt/usbkey
       dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
-      mount -o ro,remount /mnt/usbkey
+      mount -o ro,remount /mnt/usbkey || (exit 0)
+    fi
      echo -n "{{ autoinstall_luks_passphrase }}" | cryptsetup luksAddKey --key-file=- /dev/sda3 /mnt/usbkeys/{{ inventory_hostname }}.key
     sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
     chroot /mnt/rootfs update-initramfs -k all -u
