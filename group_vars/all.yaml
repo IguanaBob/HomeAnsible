@@ -13,7 +13,7 @@ base_packages:
   - file
   - postfix
   - libsasl2-modules
-domainname: home.hull.network
+  - smartmontools
 
 ansible_ssh_private_key_file: /root/.ssh/svc_ansible
 ansible_user: svc_ansible
