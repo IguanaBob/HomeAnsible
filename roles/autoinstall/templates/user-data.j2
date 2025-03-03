@@ -167,7 +167,7 @@ autoinstall:
     
     ### Luks TRIM
     # cryptsetup --allow-discards --persistent refresh pvpart-crypt || (exit 0)  #requires keyboard input
-    sed -i "s/luks/luks,discard/" /target/etc/crypttab || (exit 0)
+    #sed -i "s/luks/luks,discard/" /target/etc/crypttab || (exit 0)
     
     ##### BTRFS Subvolumes #####
     
@@ -288,6 +288,21 @@ autoinstall:
     # - Add something to append rd.luks.options=discard to CMD DEFAULT, then run update-initramfs -c -k all and update-grub
     # - remote ubuntu-pro-client package? Dependency issues. 
     # what is sgtlauncher
+    
+{% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
+    # LUKS key USB
+    # Reuses existing key rather than overwriting.
+    mkdir /mnt/usbkey
+    mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid }} /mnt/usbkey
+    if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
+      # Key does not exist, generate it.
+      mount -o rw,remount /mnt/usbkey
+      dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
+      mount -o ro,remount /mnt/usbkey
+     echo -n "{{ autoinstall_luks_passphrase }}" | cryptsetup luksAddKey --key-file=- /dev/sda3 /mnt/usbkeys/{{ inventory_hostname }}.key
+    sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
+    chroot /mnt/rootfs update-initramfs -k all -u
+{% endif %}
     
     ### Cleanup
     chroot /mnt/rootfs apt autoremove -y || (exit 0)

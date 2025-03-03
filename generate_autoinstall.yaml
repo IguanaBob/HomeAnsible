@@ -1,12 +1,16 @@
 ---
-- name: test
+- name: Generate Ubuntu autoinstall for cloud-init
   hosts: all
   become: true
   gather_facts: false
   strategy: linear
+  vars_files:
+    - "{{ 'private_vars/luks_common.yaml' if (autoinstall_encrypt_disk | default(False)) else omit }}"
+    - "{{ 'private_vars/' + inventory_hostname + '.yaml' if (autoinstall_encrypt_disk | default(False)) else omit }}"
   tasks:
 
     - name: Generate autoinstall for cloud-init
       include_role:
         name: autoinstall
         tasks_from: generate_autoinstall.yaml
+          #vars_from: "private_vars/{{ inventory_hostname }}.yaml"
