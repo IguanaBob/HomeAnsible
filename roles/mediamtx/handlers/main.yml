@@ -1,7 +1,13 @@
 ---
-- name: Restart MediaMTX
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  listen:
+    - Reload systemd
+
+- name: Restart MediaMTX service
   ansible.builtin.systemd:
     name: mediamtx
     state: restarted
   listen:
-    - restart mediamtx
+    - Restart mediamtx
