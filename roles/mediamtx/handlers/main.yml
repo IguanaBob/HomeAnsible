@@ -9,5 +9,6 @@
   ansible.builtin.systemd:
     name: mediamtx
     state: restarted
+    enabled: true
   listen:
     - Restart mediamtx
