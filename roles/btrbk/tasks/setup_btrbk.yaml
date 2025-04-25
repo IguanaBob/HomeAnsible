@@ -1,0 +1,15 @@
+---
+
+# install
+
+# mkdir
+
+- name: Template btrbk.conf
+  template:
+    src: btrbk.conf
+    dest: /etc/btrbk/btrbk.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# test backup
