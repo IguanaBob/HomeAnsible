@@ -1,5 +1,5 @@
 ---
-mediamtx_version: "1.9.3"
+mediamtx_version: "1.12.0"
 mediamtx_arch: "arm64v8"
 rpi_camera_width: 1296
 rpi_camera_height: 972
