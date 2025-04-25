@@ -3,4 +3,14 @@ In my quest to showcase some of my personal code, this is where I will share my 
 
 This is not a complete set. I am adding pieces one-by-one after checking for/sanitizing any sensitive information.
 
-AGPLv3 for now, but I may re-evaluate this later.
+The repo is GNU AGPLv3 except for the following files:
+
+roles/btrbk/templates/btrbk.conf
+Based on btrbk project
+Original is GNU GPL 3.0 license, combined work also GNU GPL 3.0
+https://github.com/digint/btrbk
+
+roles/mediamtx/templates/mediamtx_config.yaml.j2
+Based on the config file from the mediamtx project.
+https://github.com/bluenviron/mediamtx
+Original is MIT license, combined work is GNU AGPL 3.0
