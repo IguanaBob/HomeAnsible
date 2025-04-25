@@ -1,0 +1,7 @@
+---
+# Settings tested as best for:
+# Intel(R) Core(TM) i3-5005U CPU @ 2.00GHz
+# We may want to just detect the CPU later, but for now I have manual groups.
+
+btrfs_comp_norm: 1
+btrfs_comp_high: 4
