@@ -6,6 +6,12 @@
       - gstreamer1.0-rtsp
       - gstreamer1.0-alsa
       - alsa-utils
+      - libcamera0  # Zero 2 W only?
+        #- libcamra-apps-lite  # or lite only?
+
+      # for mic/audio
+      - ffmpeg
+      - opus-tools
     state: present
     update_cache: true
   notify: Restart mediamtx
@@ -20,7 +26,7 @@
 
 - name: Ensure MediaMTX user has access to the camera
   ansible.builtin.command:
-    cmd: usermod -a -G video mediamtx
+    cmd: usermod -a -G video,audio mediamtx
   notify: Restart mediamtx
 
       #- name: Grant MediaMTX user access to camera devices
