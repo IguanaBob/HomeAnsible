@@ -1,0 +1,12 @@
+---
+- name: Config GPIO Audio Module
+  hosts: babycams
+  become: true
+  gather_facts: true
+  strategy: linear
+  tasks:
+
+    - name: Include role
+      include_role:
+        name: gpio_audio
+        tasks_from: config_gpio_audio.yaml

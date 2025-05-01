@@ -1,0 +1,17 @@
+---
+
+- name: Set dtoverlay for GPIO audio
+  lineinfile:
+    path: /boot/firmware/config.txt
+    line: dtoverlay=audremap,pins_18_19
+    insertafter: '^\[all\]'
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+    - gpio_audio is defined
+    - gpio_audio
+
+# TODO: Set audio in raspi-config?
+# TODO: Set volume in alsamixer?
+
