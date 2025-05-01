@@ -6,7 +6,7 @@
       - gstreamer1.0-rtsp
       - gstreamer1.0-alsa
       - alsa-utils
-      - libcamra-apps-lite
+      - libcamera-apps-lite
 
       # for mic/audio
       - ffmpeg
