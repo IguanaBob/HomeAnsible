@@ -1,0 +1,11 @@
+---
+- name: Set up btrbk 
+  hosts: nextcloud
+  become: True
+  gather_facts: True
+  strategy: linear
+  tasks:
+    - name: Setup btrbk
+      include_role:
+        name: btrbk
+        tasks_from: setup_btrbk.yaml
