@@ -15,6 +15,10 @@
     update_cache: true
   notify: Restart mediamtx
 
+- name: Enable SPI
+  shell:
+    cmd: 'raspi-config nonint do_spi 0'
+
 - name: Create MediaMTX user
   ansible.builtin.user:
     name: mediamtx
