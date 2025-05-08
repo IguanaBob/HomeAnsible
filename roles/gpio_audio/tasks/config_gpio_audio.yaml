@@ -12,6 +12,13 @@
     - gpio_audio is defined
     - gpio_audio
 
-# TODO: Set audio in raspi-config?
-# TODO: Set volume in alsamixer?
+# Reboot?
+
+- name: Set audio mapping in raspi-config
+  shell:
+    cmd: raspi-config nonint do_audio 1
+
+# Reboot?
+
+# TODO: Set volume in alsamixer? How?
 
