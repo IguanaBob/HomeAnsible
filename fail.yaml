@@ -1,0 +1,11 @@
+---
+- name: Purposly fail for testing notifications
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+  tasks:
+    - name: This task should always fail
+      debug:
+        msg: This should fail
+      failed_when: True
