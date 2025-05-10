@@ -1,0 +1,79 @@
+---
+- name: Set the system hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Set the domain name in /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ hostninventory_hostnameame }}.{{ domainname }} {{ inventory_hostname }}"
+    state: present
+    create: yes
+
+- name: Check current timezone
+  ansible.builtin.command:
+    cmd: timedatectl show --property=Timezone --value
+  register: current_timezone
+  changed_when: false
+
+- name: Set timezone to America/Chicago
+  ansible.builtin.command:
+    cmd: timedatectl set-timezone America/Chicago
+  when: current_timezone.stdout != "America/Chicago"
+
+- name: Set NTP server in timesyncd configuration
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/timesyncd.conf
+    regexp: '^NTP='
+    line: 'NTP=192.168.0.1'
+    state: present
+  notify: restart timesyncd
+
+- name: Disable IPv6 in sysctl
+  ansible.builtin.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    reload: yes
+  loop:
+    - { name: "net.ipv6.conf.all.disable_ipv6", value: "1" }
+    - { name: "net.ipv6.conf.default.disable_ipv6", value: "1" }
+    - { name: "net.ipv6.conf.lo.disable_ipv6", value: "1" }
+
+- name: Apply sysctl changes
+  ansible.builtin.command:
+    cmd: sysctl -p
+
+- name: Set default editor to vim in root profile
+  ansible.builtin.lineinfile:
+    path: /root/.profile
+    line: 'export EDITOR=/usr/bin/vim'
+    state: present
+
+- name: Set default editor to vim in skel profile
+  ansible.builtin.lineinfile:
+    path: /etc/skel/.profile
+    line: 'export EDITOR=/usr/bin/vim'
+    state: present
+
+- name: Create symlink for pigz to gzip if pigz is installed
+  ansible.builtin.file:
+    src: /usr/bin/pigz
+    dest: /usr/local/bin/gzip
+    state: link
+  when: ansible_facts.packages.pigz is defined
+
+- name: Add cp alias to root bash aliases
+  ansible.builtin.lineinfile:
+    path: /root/.bash_aliases
+    line: "alias cp='cp --reflink=auto'"
+    create: yes
+    state: present
+
+- name: Add cp alias to skel bash aliases
+  ansible.builtin.lineinfile:
+    path: /etc/skel/.bash_aliases
+    line: "alias cp='cp --reflink=auto'"
+    create: yes
+    state: present

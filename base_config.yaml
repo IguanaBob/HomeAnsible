@@ -1,0 +1,21 @@
+---
+- name: Some base OS configuration
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Install base packages
+      include_role:
+        name: packages
+        tasks_from: install_base.yml
+
+    - name: Base configuration
+      include_role:
+        name: base_config
+        tasks_from: basic_setup.yml
+
+    - name: UNbuntify
+      include_role:
+        name: debloat
+        tasks_from: unbuntu.yml

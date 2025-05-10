@@ -11,4 +11,3 @@
         name: python3-apt
         state: present
       when: ansible_distribution == "Ubuntu"
-      

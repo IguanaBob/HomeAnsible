@@ -78,7 +78,6 @@
     - {"filename": "/etc/update-motd.d/91-contract-ua-esm-status"}
     - {"filename": "/root/.hushlogin"}
     - {"filename": "/etc/skel/.hushlogin"}
-    - {"filename": "/home/slickwatersprings/.hushlogin"}
   register: truncate_esm_file
   failed_when:
     - truncate_esm_file.changed is defined
