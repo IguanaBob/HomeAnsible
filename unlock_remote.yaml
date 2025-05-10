@@ -1,0 +1,50 @@
+---
+- name: Check disks on remote backup
+  hosts: outerhaven
+  become: true
+  gather_facts: false
+  vars:
+    - mount_point: /mnt/backup
+#  vars_prompt:
+#    - name: password
+#      prompt: Enter Password to unlock hard drive
+
+  tasks:
+
+    - pause:
+          prompt: "Enter Password to unlock hard drive "
+      when: password is not defined
+      register: password
+      no_log: true
+
+    # TODO: Add SSH key for btrbk to root, or put backup in a seperate playbook
+
+    # TODO: Check if the disk is already unlocked
+    - name: Unlocking backup drive
+      shell:
+        cmd: " echo {{ password }} | cryptsetup luksOpen {{ usb_disk }} {{ luks_disk }}"
+      no_log: true
+      register: luks_output
+      failed_when: luks_output.rc != 0 and "already exists" not in luks_output.stderr
+      changed_when: luks_output.rc == 0 or "already exists" in luks_output.stderr
+
+    - name: Make sure mount point exists
+      ansible.builtin.file:
+        path: "{{ mount_point }}"
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Mount the device and ensure it is in /etc/fstab
+      ansible.builtin.mount:
+        path: "{{ mount_point }}"
+        src:  "/dev/mapper/{{ luks_disk }}"
+        fstype: btrfs
+        opts: "compress=zstd-force=zstd:1,ro"
+        state: mounted
+        boot: false
+    
+    #- name: Setting spin-down time to 2 minutes
+    #  shell:
+    #    cmd: "hdparm -q -S 24 {{ usb_disk }}"
