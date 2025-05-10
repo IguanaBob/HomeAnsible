@@ -1,0 +1,46 @@
+---
+### This is a simple test playbook attempting to gather information from an
+### unlabeled Raspberry Pi. Mainly to find the MAC address(es) and memory amount.
+
+- name: Gather Raspberry Pi Information
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+  tasks:
+
+    - name: Gather Raspberry Pi model
+      command:
+        cmd: cat /proc/device-tree/model
+      register: pi_model
+      ignore_errors: true
+
+    - block:
+
+      - name: Gather memory information
+        shell: 
+          cmd: free -h | grep Mem
+        register: memory_info
+
+      - name: Get MAC address of eth0
+        command: 
+          cmd: cat /sys/class/net/eth0/address
+        register: mac_eth0
+        ignore_errors: yes
+
+      - name: Get MAC address of wlan0
+        command: 
+          cmd: cat /sys/class/net/wlan0/address
+          register: mac_wlan0
+        ignore_errors: yes
+
+      - name: Display Raspberry Pi Information
+        debug:
+          msg: |
+            Raspberry Pi Model: {{ pi_model.stdout.strip() }}
+            Memory: {{ memory_info.stdout.split()[1] }} total
+            MAC Address (eth0): {{ mac_eth0.stdout.strip() if mac_eth0 is defined and mac_eth0.stdout else "eth0 not available" }}
+            MAC Address (wlan0): {{ mac_wlan0.stdout.strip() if mac_wlan0 is defined and mac_wlan0.stdout else "wlan0 not available" }}
+
+      when: pi_model is defined and pi_model.stdout != ''
+

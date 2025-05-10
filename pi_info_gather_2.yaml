@@ -1,0 +1,72 @@
+---
+### This is a simple test playbook attempting to gather information from an
+### unlabeled Raspberry Pi. Mainly to find the MAC address(es) and memory amount.
+
+- name: Gather Raspberry Pi Information
+  hosts: all
+  become: true
+  gather_facts: false
+  strategy: mitogen_linear
+  vars:
+  tasks:
+
+    - name: Gather Raspberry Pi model
+      command:
+        cmd: cat /proc/device-tree/model
+      register: pi_model
+      ignore_errors: true
+
+    - block:
+
+      - name: Gather facts
+        setup:
+
+          #      - name: Define memory options
+          # set_fact:
+          #memory_options_mb: [256, 512, 1024, 2048, 4096, 8192, 16384]
+
+      - name: Identify memory per free -m
+        shell:
+          cmd: free -m --si | grep Mem | awk '{print $2}'
+        register: free_m_memory
+
+      - name: Identify video memory amount
+        shell:
+          cmd: vcdbg reloc | grep "total space allocated" | awk '{print $5}' | cut -f1 -dM
+        ignore_errors: true
+        register: vid_memory
+
+      - name: Identify memory from raspinfo
+        shell:
+          cmd: raspinfo | egrep "^total_mem" | cut -f2 -d=
+        ignore_errors: true
+        register: raspinfo_memory
+
+      - name: Identify the first Ethernet and Wi-Fi devices
+        set_fact:
+          ethernet_device: "{{ ansible_interfaces | select('match', '^e') | list | first | default('none') }}"
+          wifi_device: "{{ ansible_interfaces | select('match', '^w') | list | first | default('none') }}"
+
+      - name: Identify OS
+        shell:
+          cmd: lsb_release -a | grep "Description" | cut -b 14-
+        register: os_version
+        ignore_errors: true
+
+      - name: Prepare output
+        set_fact:
+          output_text: |+
+            Raspberry Pi Model: {{ pi_model.stdout | default('Unknown Model') }}
+            Total Memory (Ansible fact): {{ ansible_memtotal_mb | default('Unable to determine') }} M
+            Total Memory (free -m + vcdbg reloc): {{ ( free_m_memory.stdout | default(0) | int ) + ( vid_memory.stdout | default(0) | int ) }} M
+            Total Memory (raspinfo): {{ raspinfo_memory.stdout | default('Unable to determine') }} M
+            MAC Address (Ethernet): {{ ansible_facts[ethernet_device]['macaddress'] if ethernet_device != 'none' and ethernet_device in ansible_facts else 'No Ethernet device found' }}
+            MAC Address (Wi-Fi): {{ ansible_facts[wifi_device]['macaddress'] if wifi_device != 'none' and wifi_device in ansible_facts else 'No Wi-Fi device found' }}
+            Installed OS: {{ os_version.stdout | default('Unable to determine') }}
+
+      - name: Display Raspberry Pi information
+        debug:
+          msg: "{{ output_text | replace('\u0000', '') | split('\n') }}"
+
+      when: pi_model is defined and pi_model.stdout != ''
+
