@@ -23,7 +23,7 @@ btrbk_btrfs_commit_delete: "no"
 
 # 30mbit
 btrbk_stream_compress: zstd
-btrbk_stream_compress_level: 13
+btrbk_stream_compress_level: 2
 btrbk_stream_compress_threads: 4
 btrbk_stream_compress_adapt: "yes"
 

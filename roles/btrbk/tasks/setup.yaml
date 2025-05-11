@@ -1,0 +1,60 @@
+---
+- name: Install btrbk and dependencies
+  package:
+    name:
+      - btrbk
+      - btrfs-progs
+      - mbuffer
+      - zstd
+    state: present
+
+- name: Install btrbk dependencies on remote
+  package:
+    name:
+      - btrfs-progs
+      - mbuffer
+      - zstd
+    state: present
+  delegate_to: "{{ backup_server}}"
+
+- name: Template btrbk.conf
+  template:
+    src: btrbk.conf
+    dest: /etc/btrbk/btrbk.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install SSH private key
+  copy:
+    src: private_files/btrbk.key
+    dest: /root/.ssh/btrbk.key
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Install SSH public key
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'private_files/btrbk.key.pub') }}"
+  delegate_to: "{{ backup_server}}"
+
+- name: Install ssh_filter_btrbk.sh
+  copy:
+    src: ssh_filter_btrbk.sh
+    dest: /usr/local/bin/ssh_filter_btrbk
+    owner: root
+    group: root
+    mode: '0755'
+  delegate_to: "{{ backup_server}}"
+
+- name: Allow SSH to root on backup server
+  lineinfile:
+    line: PermitRootLogin prohibit-password
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PermitRootLogin'
+    validate: 'sshd -t -f %s'
+  delegate_to: "{{ backup_server}}"
+  notify: restart backup sshd

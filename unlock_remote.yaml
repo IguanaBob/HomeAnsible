@@ -4,7 +4,7 @@
   become: true
   gather_facts: false
   vars:
-    - mount_point: /mnt/backup
+    - mount_point: "{{ backup_drive }}"
 #  vars_prompt:
 #    - name: password
 #      prompt: Enter Password to unlock hard drive

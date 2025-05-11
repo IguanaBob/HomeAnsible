@@ -6,6 +6,7 @@ This is not a complete set. I am adding pieces one-by-one after checking for/san
 The repo is GNU AGPLv3 except for the following files:
 
 roles/btrbk/templates/btrbk.conf
+roles/btrbk/files/ssh_filter_btrbk.sh
 Based on btrbk project
 Original is GNU GPL 3.0 license, combined work also GNU GPL 3.0
 https://github.com/digint/btrbk

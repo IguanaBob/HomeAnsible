@@ -1,0 +1,12 @@
+---
+- name: Launch btrbk snapshot
+  hosts: nextcloud
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Launch btrbk snapshot
+      include_role:
+        name: btrbk
+        tasks_from: snapshot.yaml
+        
