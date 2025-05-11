@@ -5,8 +5,8 @@
   gather_facts: False
   strategy: mitogen_linear
   vars_files:
-    - "private_vars/luks_common.yaml"
-    - "private_vars/{{ inventory_hostname }}.yaml"
+    - "private/vars/luks_common.yaml"
+    - "private/vars/{{ inventory_hostname }}.yaml"
   tasks:
     - name: Add USB keyfile to LUKS
       include_role:
