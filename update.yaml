@@ -1,11 +1,11 @@
 ---
-- name: test
+- name: Install package updates
   hosts: all
   become: true
   gather_facts: true
   tasks:
 
-    - name: Include update role
+    - name: Install package updates
       include_role:
         name: packages
         tasks_from: update.yaml
