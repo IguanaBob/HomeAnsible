@@ -1,0 +1,35 @@
+---
+- name: Check if Raspberry Pi firmware and bootloader updates are available
+  ansible.builtin.shell:
+    cmd: rpi-eeprom-update
+  register: rpi_eeprom_update
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Update bootloader and/or firmware
+  block:
+    - name: Set bootloader config
+      ansible.builtin.shell:
+        cmd: rpi-eeprom-update -d
+      register: rpi_eeprom_update_bootloader
+      changed_when:
+        - rpi_eeprom_update_bootloader is defined
+        - rpi_eeprom_update_bootloader.rc is defined
+        - "( rpi_eeprom_update_bootloader.rc == 0 or ( rpi_eeprom_update_bootloader.rc == 1 and ('BOOTLOADER: update available' in rpi_eeprom_update_bootloader.stdout or 'UPDATE AVAILABLE' in rpi_eeprom_update_bootloader.stdout )))"
+      failed_when:
+        - rpi_eeprom_update_bootloader is defined
+        - rpi_eeprom_update_bootloader.rc is defined
+        - rpi_eeprom_update_bootloader.rc != 0
+        - "'BOOTLOADER: update available' not in rpi_eeprom_update_bootloader.stdout"
+        - "'UPDATE AVAILABLE' not in rpi_eeprom_update_bootloader.stdout"
+
+    - name: Update Raspberry Pi firmware
+      ansible.builtin.shell:
+        cmd: rpi-eeprom-update -a
+      register: rpi_eeprom_update_firmware
+  when:
+    - rpi_eeprom_update is defined
+    - rpi_eeprom_update.rc is defined
+    - rpi_eeprom_update.rc == 1
+    - "( 'UPDATE AVAILABLE' in rpi_eeprom_update.stdout or 'BOOTLOADER: update available' in rpi_eeprom_update.stdout )"
