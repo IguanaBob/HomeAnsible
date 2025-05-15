@@ -1,0 +1,11 @@
+---
+# Eventually this will allow rebooting a luks encrypted remote system without the USB key being inserted.
+
+# Generate temporary key
+# Add key file to /boot
+# Add key file to LUKS in a new keyslot with specified slot #
+# Modify crypttab to use the temporary key file
+# Reboot
+# Modify crypttab to use the USB key file
+# Remove key file from /boot
+# Remove key file from LUKS

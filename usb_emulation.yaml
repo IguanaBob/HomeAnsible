@@ -1,0 +1,15 @@
+---
+# This will be for setting up a Raspberry Pi with USB-Gadget-Mode to work as a emulated USB flash drive.
+
+# Create a directory to store files
+# SCP files to it
+# Take these files, create a FAT32 ISO image to present over gadget-mode
+# Present it, read-only
+#
+# Have a watchdog script which monitors for changes
+# If changes found, "detach" the virtual drive.
+# Create a new ISO
+# Wait a few seconds if needed
+# Present the new ISO over USB
+#
+# TODO: Decide what is done by script, what is done by Ansible, what is local, what is remote, should the repo be on the fileserver, etc?
