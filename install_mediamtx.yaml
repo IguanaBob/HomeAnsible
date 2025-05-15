@@ -1,12 +1,12 @@
 ---
-- name: test
+- name: Install MediaMTX
   hosts: all
   become: true
   gather_facts: true
   strategy: linear
   tasks:
 
-    - name: Include update role
+    - name: Install MediaMTX
       include_role:
         name: mediamtx
         tasks_from: install.yml
