@@ -1,0 +1,64 @@
+---
+- name: Enable OTG mode - config.txt
+  ansible.builtin.replace:
+    path: /boot/firmware/config.txt
+    regexp: '^otg_mode=1'
+    replace: '#otg_mode=1'
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reboot
+
+- name: Enable dwc2 - config.txt
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/config.txt
+    line: '{{ item }}'
+    insertafter: '^[all]'
+    state: present
+  with_items:
+    - modules-load=dwc2
+    - dtoverlay=dwc2
+  notify: reboot
+
+- name: Enable dwc2 - cmdline.txt
+  ansible.builtin.replace:
+    path: /boot/firmware/cmdline.txt
+    regexp: 'rootwait(?!.*\bmodules-load=dwc2\b)'
+    replace: 'rootwait modules-load=dwc2'
+  notify: reboot
+
+- name: Create directories on Pi
+  ansible.builtin.file:
+    state: directory
+    path: '{{ item }}'
+    owner: pi
+    group: pi
+    mode: '0755'
+  with_items:
+    - /home/pi/usb_files
+    - /home/pi/usb_loop
+
+- name: Check if loopback file exists
+  ansible.builtin.stat:
+    path: /home/pi/usb.bin
+  register: usb_bin
+  
+- name: Create loopback file
+  ansible.builtin.command:
+    cmd: 'dd if=/dev/zero of=/home/pi/usb.bin bs=1M count=0 seek=4096'
+  when: not usb_bin.stat.exists
+  register: usb_bin_create
+
+- name: Format loopback file
+  ansible.builtin.command:
+    cmd: 'mkfs.vfat -F 32 -s 8 -S 512 -n USB_VIRT /home/pi/usb.bin'
+  when: usb_bin_create is changed
+  register: usb_bin_format
+
+#- name: Mount usb.bin to usb_loop
+#  ansible.posix.mount:
+#    src:  /home/pi/usb.bin
+#    path: /home/pi/usb_loop
+#    fstype: vfat
+#    opts: loop,uid=pi,gid=pi,umask=000
+#    state: mounted

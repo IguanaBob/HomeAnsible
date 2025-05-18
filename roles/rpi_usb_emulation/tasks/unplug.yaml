@@ -1,0 +1,5 @@
+---
+- name: Unplug virtual USB drive
+  community.general.modprobe:
+    name: g_mass_storage
+    state: absent

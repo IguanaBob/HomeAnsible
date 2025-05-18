@@ -1,0 +1,6 @@
+---
+- name: Plug in the virtual USB drive
+  community.general.modprobe:
+    name: g_mass_storage
+    params: 'file=/home/pi/usb.bin stall=0 removable=0 ro={{ pi_usb_read_only | default("1")}}'
+    state: present

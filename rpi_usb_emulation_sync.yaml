@@ -1,0 +1,12 @@
+---
+- name: Sync files on virtual USB drive
+  hosts: usbemulators
+  become: true
+  gather_facts: false
+  strategy: mitogen_linear
+  tasks:
+
+    - name: Sync files on virtual USB drive
+      include_role:
+        name: rpi_usb_emulation
+        tasks_from: sync.yaml

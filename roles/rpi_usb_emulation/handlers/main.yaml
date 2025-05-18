@@ -1,0 +1,9 @@
+---
+- name: Reboot
+  ansible.builtin.reboot:
+    msg: "Rebooting to apply changes"
+    connect_timeout: 5
+    reboot_timeout: 600
+    test_command: whoami
+  listen: reboot
+  

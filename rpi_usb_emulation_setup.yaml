@@ -1,0 +1,12 @@
+---
+- name: Enable RPI USB Gadget-Mode USB Flash-Drive Emulation
+  hosts: usbemulators
+  become: true
+  gather_facts: true
+  strategy: mitogen_linear
+  tasks:
+
+    - name: Enable RPI USB Gadget-Mode USB Flash-Drive Emulation
+      include_role:
+        name: rpi_usb_emulation
+        tasks_from: setup.yaml

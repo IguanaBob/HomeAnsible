@@ -1,0 +1,7 @@
+---
+### You must set these here or in host vars in your configuration ###
+### The below example will use the directory of /datadrive/virtual_usb/mypritner/ to sync to the virtual USB drive for that printer. You must create this dicretory with proper ownership/perms. ###
+# pi_usb_src_path: /datadrive/virtual_usb/  # Path to on your ansible controller where the virtual USB drive files will sync from.
+# pi_usb_printer_name: myprinter  # Hostname of your printer and name of directory inside pi_usb_src_path for each printer.
+
+pi_usb_read_only: 1  # Set to read-write (0) for printer firmware updates

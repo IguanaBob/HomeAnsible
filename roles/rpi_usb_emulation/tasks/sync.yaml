@@ -1,0 +1,42 @@
+---
+# Eventually this should trigger automatically on file upload
+# but for now it's manually triggered
+
+- name: Unplug virtual USB drive
+  include_tasks: unplug.yaml
+
+- name: Mount usb.bin to usb_loop as read-write
+  ansible.posix.mount:
+    src:  /home/pi/usb.bin
+    path: /home/pi/usb_loop
+    fstype: vfat
+    opts: loop,uid=pi,gid=pi,umask=000
+    state: mounted
+
+- name: Mirror data to /home/pi/usb_files
+  ansible.builtin.synchronize:
+    src:  '{{ pi_usb_src_path }}/{{ pi_usb_printer_name }}/'
+    dest: /home/pi/usb_files/
+    archive: yes
+    delete: yes
+    recursive: yes
+
+- name: Mirror /home/pi/usb_files to /home/pi/usb_loop
+  ansible.builtin.synchronize:
+    src:  /home/pi/usb_files/
+    dest: /home/pi/usb_loop/
+    archive: yes
+    delete: yes
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Unmount usb.bin
+  ansible.posix.mount:
+    src:  /home/pi/usb.bin
+    path: /home/pi/usb_loop
+    fstype: vfat
+    opts: loop,uid=pi,gid=pi,umask=000
+    state: unmounted
+
+- name: Plug in virtual USB drive
+  include_tasks: plug.yaml
