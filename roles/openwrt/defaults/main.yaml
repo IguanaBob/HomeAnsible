@@ -1,0 +1,6 @@
+---
+openwrt_sysupgrade_filename: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-squashfs-sysupgrade.bin'
+openwrt_sysupgrade_url: 'https://downloads.openwrt.org/releases/{{ openwrt_release }}/targets/{{ openwrt_arch }}/{{ openwrt_cpu}}/{{ openwrt_sysupgrade_filename }}'
+openwrt_sysupgrade_typical_size_mb: 8
+ssh_opts: ''
+reboot_timeout: 600

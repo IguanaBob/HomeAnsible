@@ -1,0 +1,11 @@
+---
+- name: Install OpenWRT update
+  hosts: openwrt
+  become: true
+  gather_facts: false
+  tasks:
+
+    - name: Install OpenWRT update
+      include_role:
+        name: openwrt
+        tasks_from: update.yaml

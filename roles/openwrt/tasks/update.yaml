@@ -1,0 +1,75 @@
+---
+### TODO: Automatically determine newest OpenWRT version, release and checksum
+### TODO: Check version as well as release?
+### TODO: Backup of current configuration
+### TODO: Find a way to throttle async tasks
+
+- name: Check current OpenWRT release
+  delegate_to: localhost
+  command: >
+    ssh root@{{ inventory_hostname }}
+    "grep DISTRIB_RELEASE /etc/openwrt_release | cut -f2 -d\'"
+  register: openwrt_installed_release
+  changed_when: false
+  check_mode: false
+
+- name: Upgrade OpenWRT
+  block:
+
+    - name: Verify sufficient RAM availble to hold sysupgrade image
+      delegate_to: localhost
+      command: >
+        ssh {{ ssh_opts }} root@{{ inventory_hostname }}
+        "free | grep \"^Mem:\" | awk '{print $7}'"
+      register: free_mem_mb
+      failed_when: free_mem_mb.stdout | int < ( openwrt_sysupgrade_typical_size_mb | int * 2 )
+      changed_when: false
+      check_mode: false
+
+    - name: Download OpenWRT sysupgrade image
+      delegate_to: localhost
+      command: >
+        ssh {{ ssh_opts }} root@{{ inventory_hostname }}
+        "wget -q -O /tmp/{{ openwrt_sysupgrade_filename }} {{ openwrt_sysupgrade_url }}"
+      register: wget_result
+      changed_when: "'saved' in wget_result.stdout or wget_result.rc == 0"
+
+    - name: Verify SHA-256 checksum
+      delegate_to: localhost
+      command: >
+        ssh {{ ssh_opts }} root@{{ inventory_hostname }}
+        "sha256sum /tmp/{{ openwrt_sysupgrade_filename }} | awk '{print $1}'"
+      register: image_sha256
+      changed_when: false
+      failed_when: image_sha256.stdout != openwrt_sysupgrade_sha256_checksum
+
+    - name: Execute sysupgrade
+      delegate_to: localhost
+      command: >
+        ssh {{ ssh_opts }} root@{{ inventory_hostname }}
+        "sysupgrade -v /tmp/{{ openwrt_sysupgrade_filename }}"
+      async: 1
+      poll: 0
+      ignore_errors: true
+
+    - name: Wait for router to finish rebooting
+      delegate_to: localhost
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        state: started
+        delay: 15
+        timeout: "{{ reboot_timeout }}"
+
+    - name: Check new OpenWRT release
+      delegate_to: localhost
+      command: >
+        ssh {{ ssh_opts }} root@{{ inventory_hostname }}
+        "grep DISTRIB_RELEASE /etc/openwrt_release | cut -f2 -d\'"
+      register: openwrt_new_release
+      changed_when: false
+      failed_when: not ( openwrt_version is version(openwrt_new_release.stdout | trim, '=', strict=True))
+      check_mode: false
+
+  when: openwrt_release is version(openwrt_installed_release.stdout | trim, '>', strict=True)
+  #throttle: 1  # Only one OpenWRT device upgrades at a time ## Doesn't work with async tasks
