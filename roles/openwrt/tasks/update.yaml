@@ -4,7 +4,7 @@
 ### TODO: Backup of current configuration
 ### TODO: Find a way to throttle async tasks
 
-- name: Check current OpenWRT release
+- name: Check installed OpenWRT release
   delegate_to: localhost
   command: >
     ssh root@{{ inventory_hostname }}
@@ -52,7 +52,7 @@
       poll: 0
       ignore_errors: true
 
-    - name: Wait for router to finish rebooting
+    - name: Wait for device to finish rebooting
       delegate_to: localhost
       wait_for:
         host: "{{ inventory_hostname }}"
