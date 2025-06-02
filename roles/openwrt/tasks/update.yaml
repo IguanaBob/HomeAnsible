@@ -71,5 +71,7 @@
       failed_when: not ( openwrt_version is version(openwrt_new_release.stdout | trim, '=', strict=True))
       check_mode: false
 
-  when: openwrt_release is version(openwrt_installed_release.stdout | trim, '>', strict=True)
+  when: >
+    ( openwrt_release is version(openwrt_installed_release.stdout | trim, '>', strict=True) )
+    or ( openwrt_force_upgrade | bool )
   #throttle: 1  # Only one OpenWRT device upgrades at a time ## Doesn't work with async tasks
