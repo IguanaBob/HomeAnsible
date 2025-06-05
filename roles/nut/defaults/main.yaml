@@ -1,0 +1,5 @@
+---
+nut_is_server: false
+nut_is_client: false
+nut_server_addr: "localhost"
+nut_server_port: 3493

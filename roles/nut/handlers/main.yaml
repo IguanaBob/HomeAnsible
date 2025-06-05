@@ -1,0 +1,11 @@
+---
+- name: Restart NUT server
+  ansible.builtin.service:
+    name: nut-server
+    state: restarted
+  listen: restart nut-server
+
+- name: Pause for 5 seconds to allow NUT server to start
+  ansible.builtin.pause:
+    seconds: 5
+  listen: restart nut-server

@@ -1,0 +1,12 @@
+---
+- name: Install NUT server
+  hosts: nut_servers
+  become: true
+  gather_facts: true
+  strategy: mitogen_linear
+  tasks:
+
+    - name: Install NUT server
+      include_role:
+        name: nut
+        tasks_from: nut_server.yaml
