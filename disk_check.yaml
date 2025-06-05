@@ -3,7 +3,7 @@
 
 ---
 - name: Check disks
-  hosts: all
+  hosts: all:!bellerophon:!destro
   become: true
   gather_facts: false
   vars:
