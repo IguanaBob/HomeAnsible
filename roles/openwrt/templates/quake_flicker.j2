@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+START=99
+STOP=10
+
+LED="/sys/class/leds/{{ sys_led }}/brightness"
+TRIGGER="/sys/class/leds/{{ sys_led }}/trigger"
+PATTERN="mmamammmmammamamaaamammma"
+PATTERN_LEN=25
+SLEEP_CMD="/bin/sleep"
+PIDFILE="/var/run/quake_flicker.pid"
+
+start() {
+    echo "Starting Quake LED flicker..."
+    echo none > "$TRIGGER"
+    (
+        while true; do
+            i=0
+            while [ "$i" -lt "$PATTERN_LEN" ]; do
+                CHAR="${PATTERN:$i:1}"
+                case "$CHAR" in
+                    a) echo 0 > "$LED" ;;
+                    *) echo 1 > "$LED" ;;
+                esac
+                $SLEEP_CMD 0.2
+                i=$((i + 1))
+            done
+        done
+    ) &
+    echo $! > "$PIDFILE"
+}

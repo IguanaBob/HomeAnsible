@@ -1,0 +1,12 @@
+---
+- name: Install Quake LED flicker service
+  hosts: openwrt
+  become: true
+  gather_facts: false
+  strategy: linear
+  tasks:
+
+    - name: Install Quake LED flicker service
+      include_role:
+        name: openwrt
+        tasks_from: quake_flicker.yaml
