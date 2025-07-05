@@ -1,5 +1,12 @@
 ---
+# Needed for galaxy role gekmihesg.openwrt
+ansible_user: root
+ansible_connection: ssh
+ansible_shell_type: sh
+ansible_python_interpreter: none
+
 openwrt_release: '24.10.2'
 openwrt_dl_base: 'https://downloads.openwrt.org/releases/{{ openwrt_release }}/targets/{{ openwrt_arch }}/{{ openwrt_cpu }}'
 openwrt_sysupgrade_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-squashfs-sysupgrade.bin'
 openwrt_kernel_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-initramfs-kernel.bin'
+
