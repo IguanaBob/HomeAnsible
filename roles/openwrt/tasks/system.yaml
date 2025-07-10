@@ -1,0 +1,7 @@
+---
+- name: Config /etc/config/system
+  template:
+    src: system.j2
+    dest: /etc/config/system
+  notify:
+    - Reload system

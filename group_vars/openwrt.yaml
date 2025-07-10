@@ -10,3 +10,7 @@ openwrt_dl_base: 'https://downloads.openwrt.org/releases/{{ openwrt_release }}/t
 openwrt_sysupgrade_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-squashfs-sysupgrade.bin'
 openwrt_kernel_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-initramfs-kernel.bin'
 
+openwrt_timezone: 'CST6CDT,M3.2.0,M11.1.0'
+openwrt_zonename: 'America/Chicago'
+openwrt_ntp_servers:
+  - '192.168.0.1'

@@ -1,0 +1,14 @@
+---
+- name: OpenWRT test
+  hosts: openwrt
+  gather_facts: false
+  become: false
+  strategy: linear
+  #check_mode: true
+  roles:
+    - gekmihesg.openwrt
+  tasks:
+    - import_role:
+        name: openwrt
+        tasks_from: system.yaml
+
