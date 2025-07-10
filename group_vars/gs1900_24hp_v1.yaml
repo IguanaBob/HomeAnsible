@@ -5,3 +5,30 @@ openwrt_arch: 'realtek'
 openwrt_cpu: 'rtl838x'
 openwrt_model: 'zyxel_gs1900-24hp-v1'
 openwrt_sys_led: 'green:sys'
+openwrt_switch_ports:
+  - lan1
+  - lan2
+  - lan3
+  - lan4
+  - lan5
+  - lan6
+  - lan7
+  - lan8
+  - lan9
+  - lan10
+  - lan11
+  - lan12
+  - lan13
+  - lan14
+  - lan15
+  - lan16
+  - lan17
+  - lan18
+  - lan19
+  - lan20
+  - lan21
+  - lan22
+  - lan23
+  - lan24
+  - lan25
+  - lan26

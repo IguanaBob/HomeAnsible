@@ -1,20 +1,20 @@
 config system
-	option hostname '{{ openwrt_hostname | default(ansible_hostname) }}'
-	option timezone '{{ openwrt_timezone | default("UTC") }}'
+	option hostname '{{ openwrt_system_hostname | default(ansible_hostname) }}'
+	option timezone '{{ openwrt_system_timezone | default("UTC") }}'
 	option ttylogin '0'
 	option log_size '128'
 	option urandom_seed '0'
 	option compat_version '2.0'
-	option zonename '{{ openwrt_zonename | default("UTC") }}'
+	option zonename '{{ openwrt_system_zonename | default("UTC") }}'
 	option log_proto 'udp'
 	option conloglevel '8'
 	option cronloglevel '7'
 
 config timeserver 'ntp'
-	option enable_server '{{ openwrt_ntp_enable_server | default("0") }}'
-{% if openwrt_ntp_servers | length > 0 %}
+	option enable_server '{{ openwrt_system_ntp_enable_server | default("0") }}'
+{% if openwrt_system_ntp_servers | length > 0 %}
 	option enabled '1'
-	list server '{{ openwrt_ntp_servers | join("', '") }}'
+	list server '{{ openwrt_system_ntp_servers | join("', '") }}'
 {% else %}
 	option enabled '0'
 {% endif %}

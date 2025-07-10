@@ -5,3 +5,9 @@ openwrt_arch: 'ramips'
 openwrt_cpu: 'mt7621'
 openwrt_model: 'totolink_x5000r'
 openwrt_sys_led: 'blue:sys'
+openwrt_switch_ports:
+  - lan1
+  - lan2
+  - lan3
+  - lan4
+  - wan
