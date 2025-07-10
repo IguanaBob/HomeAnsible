@@ -3,8 +3,10 @@
   hosts: openwrt
   become: true
   gather_facts: false
+  strategy: linear
+  roles:
+    - gekmihesg.openwrt
   tasks:
-
     - name: Install OpenWRT update
       include_role:
         name: openwrt

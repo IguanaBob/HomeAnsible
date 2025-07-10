@@ -4,10 +4,8 @@
 ### TODO: Find a way to throttle async tasks
 
 - name: Check installed OpenWRT release
-  delegate_to: localhost
-  command: >
-    ssh root@{{ ansible_host }}
-    "grep DISTRIB_RELEASE /etc/openwrt_release | cut -f2 -d\'"
+  shell:
+    cmd: "grep DISTRIB_RELEASE /etc/openwrt_release | cut -f2 -d\\'"
   register: openwrt_installed_release
   changed_when: false
   check_mode: false
@@ -16,10 +14,8 @@
   block:
 
     - name: Verify sufficient RAM availble to hold sysupgrade image
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "free | grep \"^Mem:\" | awk '{print $7}'"
+      shell:
+        cmd: "free | grep \"^Mem:\" | awk '{print $7}'"
       register: free_mem_mb
       failed_when: free_mem_mb.stdout | int < ( openwrt_sysupgrade_typical_size_mb | int * 2 )
       changed_when: false
@@ -37,27 +33,21 @@
         image_sha256: "{{ (openwrt_sha_index.content.splitlines() | select('search', openwrt_sysupgrade_image) | first).split()[0] }}"
 
     - name: Download OpenWRT sysupgrade image
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "wget -q -O /tmp/{{ openwrt_sysupgrade_image }} {{ openwrt_dl_base }}/{{ openwrt_sysupgrade_image }}"
+      command: 
+        cmd: "wget -q -O /tmp/{{ openwrt_sysupgrade_image }} {{ openwrt_dl_base }}/{{ openwrt_sysupgrade_image }}"
       register: wget_result
       changed_when: "'saved' in wget_result.stdout or wget_result.rc == 0"
 
     - name: Verify SHA-256 checksum
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "sha256sum /tmp/{{ openwrt_sysupgrade_image }} | awk '{print $1}'"
+      shell:
+        cmd: "sha256sum /tmp/{{ openwrt_sysupgrade_image }} | awk '{print $1}'"
       register: dl_image_sha256
       changed_when: false
       failed_when: dl_image_sha256.stdout != image_sha256
 
     - name: Execute sysupgrade
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "sysupgrade -v /tmp/{{ openwrt_sysupgrade_image }}"
+      command:
+        cmd: "sysupgrade -v /tmp/{{ openwrt_sysupgrade_image }}"
       async: 1
       poll: 0
       ignore_errors: true
@@ -72,10 +62,8 @@
         timeout: "{{ reboot_timeout }}"
 
     - name: Check new OpenWRT release
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "cat /etc/openwrt_version"
+      command:
+        cmd: "cat /etc/openwrt_version"
       register: openwrt_new_version
       changed_when: false
       failed_when: openwrt_version != (openwrt_new_version.stdout | trim)
