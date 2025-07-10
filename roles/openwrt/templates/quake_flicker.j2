@@ -2,8 +2,8 @@
 START=99
 STOP=10
 
-LED="/sys/class/leds/{{ sys_led }}/brightness"
-TRIGGER="/sys/class/leds/{{ sys_led }}/trigger"
+LED="/sys/class/leds/{{ openwrt_sys_led }}/brightness"
+TRIGGER="/sys/class/leds/{{ openwrt_sys_led }}/trigger"
 PATTERN="mmamammmmammamamaaamammma"
 PATTERN_LEN=25
 SLEEP_CMD="/bin/sleep"
