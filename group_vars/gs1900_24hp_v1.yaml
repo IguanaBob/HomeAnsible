@@ -1,6 +1,5 @@
 ---
 # Zyxel GS1900-10HP configuration
-openwrt_version: 'r28739-d9340319c6'
 openwrt_arch: 'realtek'
 openwrt_cpu: 'rtl838x'
 openwrt_model: 'zyxel_gs1900-24hp-v1'

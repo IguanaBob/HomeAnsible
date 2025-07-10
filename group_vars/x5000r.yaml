@@ -1,6 +1,5 @@
 ---
 # TOTOLINK X5000R configuration
-openwrt_version: 'r28739-d9340319c6'
 openwrt_arch: 'ramips'
 openwrt_cpu: 'mt7621'
 openwrt_model: 'totolink_x5000r'
