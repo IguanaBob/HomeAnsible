@@ -6,7 +6,7 @@
   hosts: all
   become: true
   gather_facts: false
-  vars:
+  timeout: 20
   tasks:
 
     - name: Check status of LV
