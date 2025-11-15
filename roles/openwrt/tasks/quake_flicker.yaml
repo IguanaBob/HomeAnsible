@@ -2,54 +2,29 @@
 ### This makes the SYS LED flash in the Quake/Valve light flicker pattern.
 ### https://www.alanzucconi.com/2021/06/15/valve-flickering-lights/)
 
-### TODO: Add lots of checks since all the delegated SSH work makes it hard for things to be idempotent..
-
 - name: Check if sleep package is installed
-  delegate_to: localhost
-  command: >
-    ssh {{ ssh_opts }} root@{{ ansible_host }}
-    "opkg status coreutils-sleep"
+  raw: "opkg status coreutils-sleep"
   register: sleep_package_status
   changed_when: false
   failed_when: false
   check_mode: false
 
-- name: Install quake_flicker
+- name: Install coreutils-sleep
   block:
-
     - name: Update opkg
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "opkg update"
-
-    - name: Install sleep package
-      delegate_to: localhost
-      command: >
-        ssh {{ ssh_opts }} root@{{ ansible_host }}
-        "opkg install coreutils-sleep"
-
+      raw: "opkg update && opkg install coreutils-sleep"
   when:
     - sleep_package_status is defined
     - sleep_package_status.stdout_lines is defined
     - "'Status: install' not in sleep_package_status.stdout_lines"
 
-- name: Template the init script template locally
+- name: Template the init script
   template:
     src: quake_flicker.j2
-    dest: /tmp/quake_flicker_{{ inventory_hostname }}
-  delegate_to: localhost
-
-- name: Install quake_flicker service
-  delegate_to: localhost
-  command: >
-    ssh {{ ssh_opts }} root@{{ ansible_host }}
-    "cat > /etc/init.d/quake_flicker && chmod +x /etc/init.d/quake_flicker"
-  args:
-    stdin: "{{ lookup('file', '/tmp/quake_flicker_{{ inventory_hostname }}') }}"
+    dest: /etc/init.d/quake_flicker
+    user: root
+    group: root
+    mode: "0755"
 
 - name: Enable and start the quake_flicker service
-  delegate_to: localhost
-  command: >
-    ssh {{ ssh_opts }} root@{{ ansible_host }}
-    "service quake_flicker enable && service quake_flicker start"
+  raw: "service quake_flicker enable && service quake_flicker start"

@@ -4,8 +4,9 @@
   become: true
   gather_facts: false
   strategy: linear
+  roles:
+    - gekmihesg.openwrt
   tasks:
-
     - name: Install Quake LED flicker service
       include_role:
         name: openwrt
