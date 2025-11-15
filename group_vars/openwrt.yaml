@@ -3,14 +3,23 @@
 ansible_user: root
 ansible_connection: ssh
 ansible_shell_type: sh
-ansible_python_interpreter: none
+ansible_python_interpreter: /bin/false
 
-openwrt_release: '24.10.2'
-openwrt_dl_base: 'https://downloads.openwrt.org/releases/{{ openwrt_release }}/targets/{{ openwrt_arch }}/{{ openwrt_cpu }}'
-openwrt_sysupgrade_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-squashfs-sysupgrade.bin'
-openwrt_kernel_image: 'openwrt-{{ openwrt_release }}-{{ openwrt_arch }}-{{ openwrt_cpu }}-{{ openwrt_model }}-initramfs-kernel.bin'
-
-openwrt_timezone: 'CST6CDT,M3.2.0,M11.1.0'
-openwrt_zonename: 'America/Chicago'
-openwrt_ntp_servers:
+# Customizations
+openwrt_system_timezone: 'CST6CDT,M3.2.0,M11.1.0'
+openwrt_system_zonename: 'America/Chicago'
+openwrt_system_ntp_enable_server: '0'
+openwrt_system_ntp_servers:
   - '192.168.0.1'
+openwrt_network_ipv6: '0'
+openwrt_network_proto: 'static'
+openwrt_network_netmask: '255.255.255.0'
+openwrt_network_ip6assign: '60'
+openwrt_network_gateway: '192.168.0.1'
+openwrt_network_dns:
+  - '192.168.0.1'
+openwrt_network_dns_search:
+  - 'home.hull.network'
+openwrt_network_vlans:
+  - name: 'lan'
+    vlan_id: '1'

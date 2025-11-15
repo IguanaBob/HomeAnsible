@@ -1,0 +1,7 @@
+---
+opnsense_host: "{{ inventory_hostname }}"
+#opnsense_api_key: "{{ lookup('env', 'OPNSENSE_API_KEY') }}"
+#opnsense_api_secret: "{{ lookup('env', 'OPNSENSE_API_SECRET') }}"
+opnsense_backup_dir: "./backups/opnsense/{{ inventory_hostname }}"
+validate_certs: true          # set false if you use self-signed certs
+keep_last: 14                 # rotate local copies; set 0 to disable

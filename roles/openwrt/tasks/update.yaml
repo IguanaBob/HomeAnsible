@@ -3,9 +3,15 @@
 ### TODO: Backup of current configuration
 ### TODO: Find a way to throttle async tasks
 
+- name: Ensure required firmware vars are set
+  assert:
+    that:
+      - openwrt_release is defined
+      - openwrt_version is defined
+    fail_msg: "Missing openwrt_release/openwrt_version (check vars/firmware.yaml)."
+
 - name: Check installed OpenWRT release
-  shell:
-    cmd: "grep DISTRIB_RELEASE /etc/openwrt_release | cut -f2 -d\\'"
+  raw: "awk -F\"'\" '/DISTRIB_RELEASE/ {print $2}' /etc/openwrt_release"
   register: openwrt_installed_release
   changed_when: false
   check_mode: false
@@ -13,63 +19,76 @@
 - name: Upgrade OpenWRT
   block:
 
-    - name: Verify sufficient RAM availble to hold sysupgrade image
-      shell:
-        cmd: "free | grep \"^Mem:\" | awk '{print $7}'"
-      register: free_mem_mb
-      failed_when: free_mem_mb.stdout | int < ( openwrt_sysupgrade_typical_size_mb | int * 2 )
-      changed_when: false
-      check_mode: false
-
-    - name: Fetch the sha256sums index
+    - name: Fetch sha256sums index (controller)
       delegate_to: localhost
       uri:
         url: "{{ openwrt_dl_base }}/sha256sums"
         return_content: yes
       register: openwrt_sha_index
 
-    - name: Extract SHA256 for the desired sysupgrade image
+    - name: Extract SHA256 for desired image (controller)
+      delegate_to: localhost
       set_fact:
-        image_sha256: "{{ (openwrt_sha_index.content.splitlines() | select('search', openwrt_sysupgrade_image) | first).split()[0] }}"
+        image_sha256: >-
+          {{ (openwrt_sha_index.content.splitlines()
+              | select('search', openwrt_sysupgrade_image)
+              | first).split()[0] }}
 
-    - name: Download OpenWRT sysupgrade image
-      command: 
-        cmd: "wget -q -O /tmp/{{ openwrt_sysupgrade_image }} {{ openwrt_dl_base }}/{{ openwrt_sysupgrade_image }}"
-      register: wget_result
-      changed_when: "'saved' in wget_result.stdout or wget_result.rc == 0"
+    - name: Download sysupgrade image to controller
+      delegate_to: localhost
+      get_url:
+        url: "{{ openwrt_dl_base }}/{{ openwrt_sysupgrade_image }}"
+        dest: "/tmp/{{ openwrt_sysupgrade_image }}"
+        mode: "0644"
+        checksum: "sha256:{{ image_sha256 }}"
+        force: yes
 
-    - name: Verify SHA-256 checksum
-      shell:
-        cmd: "sha256sum /tmp/{{ openwrt_sysupgrade_image }} | awk '{print $1}'"
+    - name: Check MemAvailable on device (MiB)
+      raw: "awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo"
+      register: mem_avail_mib
+      changed_when: false
+      failed_when: (mem_avail_mib.stdout | int) < (openwrt_sysupgrade_typical_size_mb | int * 2)
+      vars:
+        ansible_failed_task_msg: >
+          Need {{ openwrt_sysupgrade_typical_size_mb | int * 2 }} MiB free,
+          have {{ mem_avail_mib.stdout | int }} MiB (MemAvailable).
+
+    - name: Copy image to /tmp on device
+      copy:
+        src: "/tmp/{{ openwrt_sysupgrade_image }}"
+        dest: "/tmp/{{ openwrt_sysupgrade_image }}"
+        mode: "0644"
+
+    - name: Verify SHA256
+      raw: "sha256sum /tmp/{{ openwrt_sysupgrade_image }} | awk '{print $1}'"
       register: dl_image_sha256
       changed_when: false
-      failed_when: dl_image_sha256.stdout != image_sha256
+      failed_when: (dl_image_sha256.stdout | trim) != (image_sha256 | trim)
 
-    - name: Execute sysupgrade
-      command:
-        cmd: "sysupgrade -v /tmp/{{ openwrt_sysupgrade_image }}"
-      async: 1
-      poll: 0
-      ignore_errors: true
+    - name: Execute sysupgrade without Python
+      raw: "(sysupgrade -v /tmp/{{ openwrt_sysupgrade_image }} ) >/tmp/sysupgrade.log 2>&1 &"
+      changed_when: true
 
     - name: Wait for device to finish rebooting
       delegate_to: localhost
       wait_for:
-        host: "{{ ansible_host }}"
+        host: "{{ ansible_host | default(inventory_hostname) }}"
         port: 22
         state: started
         delay: 15
-        timeout: "{{ reboot_timeout }}"
+        timeout: "{{ reboot_timeout | default(600) }}"
 
     - name: Check new OpenWRT release
-      command:
-        cmd: "cat /etc/openwrt_version"
-      register: openwrt_new_version
+      raw: "awk -F\"'\" '/DISTRIB_RELEASE/ {print $2}' /etc/openwrt_release"
+      register: openwrt_new_release
       changed_when: false
-      failed_when: openwrt_version != (openwrt_new_version.stdout | trim)
-      check_mode: false
+
+    - name: Confirm target release
+      assert:
+        that: openwrt_release | trim == openwrt_new_release.stdout | trim
+        fail_msg: "Device reports {{ openwrt_new_release.stdout | trim }}, expected {{ openwrt_release | trim }}"
 
   when: >
     ( openwrt_release is version(openwrt_installed_release.stdout | trim, '>', strict=True) )
     or ( openwrt_force_upgrade | bool )
-  #throttle: 1  # Only one OpenWRT device upgrades at a time ## Doesn't work with async tasks
+  # throttle: 1  # Only one OpenWRT device upgrades at a time ## Doesn't work with async tasks
