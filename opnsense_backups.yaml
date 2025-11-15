@@ -1,0 +1,5 @@
+- name: Download OPNsense configuration backup
+  hosts: opnsense
+  gather_facts: false
+  roles:
+    - opnsense_backup

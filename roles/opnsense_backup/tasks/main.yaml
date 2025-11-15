@@ -1,0 +1,136 @@
+---
+- name: Ensure local backup directory exists
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    state: directory
+    mode: "0750"
+  delegate_to: localhost
+  run_once: false
+
+- name: Download current config (content only)
+  ansible.builtin.uri:
+    url: "http://{{ opnsense_host }}/api/core/backup/download/this"
+    method: GET
+    return_content: true
+    force_basic_auth: true
+    url_username: "{{ opnsense_api_key }}"
+    url_password: "{{ opnsense_api_secret }}"
+    validate_certs: "{{ validate_certs }}"
+  register: backup_resp
+  delegate_to: localhost
+  run_once: false
+
+- name: Compute hash of current backup
+  ansible.builtin.set_fact:
+    current_hash: "{{ backup_resp.content | hash('sha256') }}"
+
+- name: Find most recent saved backup (if any)
+  ansible.builtin.find:
+    paths: "{{ backup_dir }}"
+    patterns: "config-{{ inventory_hostname }}-*.xml"
+    file_type: file
+    follow: false
+  register: found_backups
+  delegate_to: localhost
+  run_once: false
+
+- name: Get latest backup file path (if exists)
+  ansible.builtin.set_fact:
+    latest_backup_path: >-
+      {{
+        (found_backups.files | sort(attribute='mtime', reverse=true) | first).path
+          if (found_backups.files | length) > 0 else None
+      }}
+
+- name: Read previous backup (if exists)
+  ansible.builtin.slurp:
+    src: "{{ latest_backup_path }}"
+  register: prev_slurp
+  when: 
+    - latest_backup_path is not none
+    - found_backups.files | length > 0
+  delegate_to: localhost
+  run_once: false
+
+# Find the most recent saved backup (if any)
+- name: Find most recent saved backup (if any)
+  ansible.builtin.find:
+    paths: "{{ backup_dir }}"
+    # Pattern can be generic because the directory is already per-host
+    patterns: "config-*.xml"
+    file_type: file
+    follow: false
+  register: found_backups
+  delegate_to: localhost
+  run_once: false
+
+# Compute the latest backup path safely ('' if none)
+- name: Compute latest backup path
+  ansible.builtin.set_fact:
+    latest_backup_path: >-
+      {{
+        (found_backups.files | sort(attribute='mtime', reverse=true)
+         | map(attribute='path') | first) | default('', true)
+      }}
+
+# If a previous backup exists, stat it and get a sha256 checksum
+- name: Stat previous backup (get checksum)
+  when: latest_backup_path | length > 0
+  ansible.builtin.stat:
+    path: "{{ latest_backup_path }}"
+    checksum_algorithm: sha256
+  register: prev_stat
+  delegate_to: localhost
+  run_once: false
+
+# Save previous hash (only if checksum exists)
+- name: Compute hash of previous backup (if exists)
+  when:
+    - prev_stat is defined
+    - prev_stat.stat.exists | default(false)
+    - prev_stat.stat.isreg | default(false)
+    - prev_stat.stat.checksum is defined
+  ansible.builtin.set_fact:
+    previous_hash: "{{ prev_stat.stat.checksum }}"
+
+# Decide if content changed
+- name: Decide whether content changed
+  ansible.builtin.set_fact:
+    changed_content: "{{ (previous_hash | default('')) != current_hash }}"
+
+- name: Build backup filename (only if changed)
+  ansible.builtin.set_fact:
+    backup_file: "{{ backup_dir }}/config-{{ inventory_hostname }}-{{ lookup('pipe','date +%Y%m%d-%H%M%S') }}.xml"
+  when: changed_content
+
+- name: Save new backup (only if changed)
+  ansible.builtin.copy:
+    dest: "{{ backup_file }}"
+    content: "{{ backup_resp.content }}"
+    mode: "0600"
+    owner: "{{ backup_user }}"
+    group: "{{ backup_group }}
+  when: changed_content
+  delegate_to: localhost
+  run_once: false
+
+- name: Rotate backups (keep newest N) — only after saving a new one
+  when: changed_content and (keep_last | int) > 0
+  ansible.builtin.shell: |
+    set -euo pipefail
+    ls -1t {{ backup_dir }}/config-{{ inventory_hostname }}-*.xml \
+      | tail -n +{{ keep_last | int + 1 }} \
+      | xargs -r rm -f
+  args:
+    executable: /bin/bash
+  delegate_to: localhost
+  run_once: false
+
+- name: Report result
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        'No change detected; skipped saving and rotation.'
+        if not changed_content else
+        'Backup saved to ' ~ backup_file ~ ' and rotation applied.'
+      }}
