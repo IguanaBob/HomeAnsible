@@ -56,7 +56,6 @@
 - name: Find most recent saved backup (if any)
   ansible.builtin.find:
     paths: "{{ backup_dir }}"
-    # Pattern can be generic because the directory is already per-host
     patterns: "config-*.xml"
     file_type: file
     follow: false
@@ -109,7 +108,7 @@
     content: "{{ backup_resp.content }}"
     mode: "0600"
     owner: "{{ backup_user }}"
-    group: "{{ backup_group }}
+    group: "{{ backup_group }}"
   when: changed_content
   delegate_to: localhost
   run_once: false
