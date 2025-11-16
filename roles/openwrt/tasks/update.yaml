@@ -43,15 +43,15 @@
         checksum: "sha256:{{ image_sha256 }}"
         force: yes
 
-    - name: Check MemFree on device (MiB)
-      raw: "awk '/MemFree/ {print int($2/1024)}' /proc/meminfo"
-      register: mem_free_mib
+    - name: Check free space on /tmp (MiB)
+      raw: "df -P /tmp | awk 'NR==2 {print int($4/1024)}'"
+      register: tmp_free_mib
       changed_when: false
-      failed_when: (mem_free_mib.stdout | int) < (openwrt_sysupgrade_typical_size_mb | int * 2)
+      failed_when: (tmp_free_mib.stdout | int) < (openwrt_sysupgrade_typical_size_mb | int * 2)
       vars:
         ansible_failed_task_msg: >
-          Need {{ openwrt_sysupgrade_typical_size_mb | int * 2 }} MiB free,
-          have {{ mem_free_mib.stdout | int }} MiB (MemFree).
+          Need {{ openwrt_sysupgrade_typical_size_mb | int * 2 }} MiB free in /tmp,
+          have {{ tmp_free_mib.stdout | int }} MiB.
 
     - name: Copy image to /tmp on device
       copy:
