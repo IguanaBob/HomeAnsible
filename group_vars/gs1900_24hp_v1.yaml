@@ -3,6 +3,7 @@
 openwrt_arch: 'realtek'
 openwrt_cpu: 'rtl838x'
 openwrt_model: 'zyxel_gs1900-24hp-v1'
+openwrt_sysupgrade_typical_size_mb: 7
 openwrt_sys_led: 'green:sys'
 openwrt_switch_ports:
   - lan1
