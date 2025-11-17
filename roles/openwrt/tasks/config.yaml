@@ -1,0 +1,14 @@
+---
+#- name: Config /etc/config/system
+#  template:
+#    src: system.j2
+#    dest: /etc/config/system
+#  notify:
+#    - Reload system
+
+- name: Config /etc/config/network
+  template:
+    src: network.j2
+    dest: /etc/config/network
+  notify:
+    - Reload network

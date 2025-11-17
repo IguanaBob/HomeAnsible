@@ -1,0 +1,74 @@
+# {{ ansible_managed }}
+# OpenWrt /etc/config/network - managed by Ansible
+
+config interface 'loopback'
+        option device 'lo'
+        option proto 'static'
+        option ipaddr '127.0.0.1'
+        option netmask '255.0.0.0'
+
+config globals 'globals'
+{% if openwrt_network_packet_steering is defined %}
+        option packet_steering '{{ openwrt_network_packet_steering }}'
+{% else %}
+        option packet_steering '1'
+{% endif %}
+{% if openwrt_network_ula_prefix is defined %}
+        option ula_prefix '{{ openwrt_network_ula_prefix }}'
+{% endif %}
+
+config device
+        option name '{{ openwrt_network_bridge_name }}'
+        option type 'bridge'
+{% if openwrt_network_bridge_mac is defined %}
+        option macaddr '{{ openwrt_network_bridge_mac }}'
+{% endif %}
+{% if openwrt_network_bridge_empty is defined %}
+        option bridge_empty '{{ '1' if openwrt_network_bridge_empty else '0' }}'
+{% endif %}
+{% if openwrt_network_bridge_mtu is defined %}
+        option mtu '{{ openwrt_network_bridge_mtu }}'
+{% endif %}
+
+{# VLAN definitions on the bridge
+   Each item in openwrt_network_vlans is:
+   - id: VLAN ID
+   - section: optional UCI section name (default: "vlan<id>")
+   - name: optional human readable name (for comments)
+   - ports: list of port specs like "lan1", "lan1:u*", "lan1:t"
+#}
+{% for vlan in openwrt_network_vlans %}
+config bridge-vlan '{{ vlan.section | default('vlan' ~ vlan.id) }}'
+        option device '{{ openwrt_network_bridge_name }}'
+        option vlan '{{ vlan.id }}'
+{%   if vlan.name is defined %}
+        # VLAN name: {{ vlan.name }}
+{%   endif %}
+{%   for port in vlan.ports %}
+        list ports '{{ port }}'
+{%   endfor %}
+{% endfor %}
+
+config interface 'lan'
+        option proto 'static'
+        option device '{{ openwrt_network_bridge_name }}.1'
+        option ipaddr '{{ openwrt_network_lan_ip }}'
+        option netmask '{{ openwrt_network_lan_netmask }}'
+{% if openwrt_network_lan_gateway is defined %}
+        option gateway '{{ openwrt_network_lan_gateway }}'
+{% endif %}
+{% if openwrt_network_lan_ip6assign is defined %}
+        option ip6assign '{{ openwrt_network_lan_ip6assign }}'
+{% else %}
+        option ip6assign '60'
+{% endif %}
+{% if openwrt_network_lan_dns is defined %}
+{%   for dns in openwrt_network_lan_dns %}
+        list dns '{{ dns }}'
+{%   endfor %}
+{% endif %}
+{% if openwrt_network_lan_dns_search is defined %}
+{%   for suffix in openwrt_network_lan_dns_search %}
+        list dns_search '{{ suffix }}'
+{%   endfor %}
+{% endif %}

@@ -10,5 +10,4 @@
   tasks:
     - import_role:
         name: openwrt
-        tasks_from: system.yaml
-
+        tasks_from: config.yaml

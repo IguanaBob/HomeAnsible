@@ -3,3 +3,8 @@
    ansible.builtin.service:
      name: system
      state: reloaded
+
+-  name: Reload network
+   ansible.builtin.service:
+     name: network
+     state: reloaded
