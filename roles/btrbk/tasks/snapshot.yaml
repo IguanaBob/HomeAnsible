@@ -1,11 +1,11 @@
 ---
 - name: Remount backup drive to RW
-  shell:
+  command:
     cmd: mount -o remount,rw {{ backup_drive }}
   delegate_to: "{{ backup_server }}"
 
 - name: Run btrbk snapshot
-  shell:
+  command:
     cmd: btrbk snapshot
   register: btrbk_snapshot
 
@@ -15,7 +15,7 @@
   when: btrbk_snapshot is defined
 
 - name: Remount backup drive to RO
-  shell:
+  command:
     cmd: mount -o remount,ro {{ backup_drive }}
   delegate_to: "{{ backup_server }}"
   
