@@ -48,20 +48,6 @@
     cmd: usermod -a -G video,audio mediamtx
   notify: Restart mediamtx
 
-      #- name: Grant MediaMTX user access to camera devices
-      #  ansible.builtin.command:
-      #    cmd: setfacl -m u:mediamtx:rw /dev/video0
-
-      #- name: Adjust ownership of MediaMTX binary and configuration
-      #  ansible.builtin.file:
-      #    path: "{{ item.path }}"
-      #    owner: mediamtx
-      #    group: mediamtx
-      #    mode: "{{ item.mode }}"
-      #  loop:
-      #    - { path: "/usr/local/bin/mediamtx", mode: '0755' }
-      #    - { path: "/usr/local/etc/mediamtx.yml", mode: '0644' }
-
 - name: Create log directory for MediaMTX
   ansible.builtin.file:
     path: /var/log/mediamtx
@@ -71,25 +57,64 @@
     group: mediamtx
   notify: Restart mediamtx
 
-- name: Copy MediaMTX binary from local files
+- name: Check if checksum index already cached
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "/tmp/mediamtx_v{{ mediamtx_version }}_checksums.sha256"
+  register: mediamtx_checksums_stat
+
+- name: Retrieve mediamtx checksum index
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: "{{ mediamtx_dl_base }}/checksums.sha256"
+    dest: "/tmp/mediamtx_v{{ mediamtx_version }}_checksums.sha256"
+    mode: "0644"
+    force: no
+  when: not mediamtx_checksums_stat.stat.exists
+
+- name: Extract SHA256 for desired package
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    image_sha256: >-
+      {{ (
+          lookup('file', '/tmp/mediamtx_v' ~ mediamtx_version ~ '_checksums.sha256')
+          .splitlines()
+          | select('search', mediamtx_package_name)
+          | first
+        ).split()[0] }}
+
+- name: Download mediamtx package to controller
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: "{{ mediamtx_dl_base }}/{{ mediamtx_package_name }}"
+    dest: "/tmp/{{ mediamtx_package_name }}"
+    mode: "0644"
+    checksum: "sha256:{{ image_sha256 }}"
+    force: no
+
+- name: Ensure mediamtx extract dir exists on controller
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}"
+    state: directory
+    mode: "0755"
+
+- name: Extract mediamtx package on controller
+  delegate_to: localhost
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ mediamtx_package_name }}"
+    dest: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}"
+    remote_src: true
+    creates: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}/mediamtx"
+
+- name: Install mediamtx binary on device
   ansible.builtin.copy:
-    src: files/mediamtx_v{{ mediamtx_version }}_linux_{{ mediamtx_arch }}
-    dest: /usr/local/bin/mediamtx
-    mode: '0755'
+    src: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}/mediamtx"
+    dest: "/usr/local/bin/mediamtx"
     owner: root
     group: root
+    mode: "0755"
   notify: Restart mediamtx
-
-      #- name: Download and extract MediaMTX
-      #  ansible.builtin.get_url:
-      #    url: "https://github.com/bluenviron/mediamtx/releases/download/v{{ mediamtx_version }}/mediamtx_v{{ mediamtx_version }}_linux_{{ mediamtx_arch }}.tar.gz"
-      #    dest: "/tmp/mediamtx.tar.gz"
-
-      #- name: Extract MediaMTX binary
-      #  ansible.builtin.unarchive:
-      #    src: /tmp/mediamtx.tar.gz
-      #    dest: /usr/local/bin/
-      #    remote_src: yes
 
 - name: Copy MediaMTX configuration
   ansible.builtin.template:
