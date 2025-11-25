@@ -1,18 +1,20 @@
 ---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Determine missing mediamtx dependencies
+  ansible.builtin.set_fact:
+    mediamtx_missing_packages: >-
+      {{ mediamtx_dependencies
+        | difference((ansible_facts.packages | default({})).keys() | list) }}
+
 - name: Install dependencies
   ansible.builtin.package:
-    name:
-      - gstreamer1.0-tools
-      - gstreamer1.0-rtsp
-      - gstreamer1.0-alsa
-      - alsa-utils
-      - libcamera-apps-lite
-
-      # for mic/audio
-      - ffmpeg
-      - opus-tools
+    name: "{{ mediamtx_missing_packages }}"
     state: present
     update_cache: true
+  when: mediamtx_missing_packages | length > 0
   notify: Restart mediamtx
 
 - name: Check if SPI is already enabled

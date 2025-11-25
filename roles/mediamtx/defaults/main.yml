@@ -2,3 +2,13 @@
 rpi_camera_width: 1296
 rpi_camera_height: 972
 rpi_camera_fps: 15
+mediamtx_dl_base: 'https://github.com/bluenviron/mediamtx/releases/download/v{{ mediamtx_version }}/'
+mediamtx_package_name: 'mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}.tar.gz'
+mediamtx_dependencies:
+  - gstreamer1.0-tools
+  - gstreamer1.0-rtsp
+  - gstreamer1.0-alsa
+  - alsa-utils
+  - libcamera-apps-lite
+  - ffmpeg
+  - opus-tools
