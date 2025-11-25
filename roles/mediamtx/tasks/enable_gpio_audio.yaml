@@ -1,0 +1,42 @@
+---
+
+- name: Set dtoverlay for GPIO audio
+  lineinfile:
+    path: /boot/firmware/config.txt
+    line: dtoverlay=audremap,pins_18_19
+    insertafter: '^\[all\]'
+    owner: root
+    group: root
+    mode: '0755'
+  when: gpio_audio
+  notify: Reboot device
+
+- name: Reboot immediately so next command does not fail
+  ansible.builtin.meta: flush_handlers
+
+- name: Check if GPIO audio mapping already configured
+  ansible.builtin.stat:
+    path: /var/local/gpio_audio_configured
+  register: gpio_audio_marker
+
+- name: Set audio mapping in raspi-config to headphones (one-time)
+  ansible.builtin.command:
+    cmd: raspi-config nonint do_audio 1
+  when:
+    - gpio_audio | default(false)
+    - not gpio_audio_marker.stat.exists
+  notify: Reboot device
+
+- name: Mark GPIO audio mapping as configured
+  ansible.builtin.file:
+    path: /var/local/gpio_audio_configured
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - gpio_audio | default(false)
+    - not gpio_audio_marker.stat.exists
+
+- name: Reboot immediately so later volume commands do not fail
+  ansible.builtin.meta: flush_handlers

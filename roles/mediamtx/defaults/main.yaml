@@ -4,6 +4,7 @@ rpi_camera_height: 972
 rpi_camera_fps: 15
 usb_mic: false
 pi_cam: true
+gpio_audio: false
 mediamtx_dl_base: 'https://github.com/bluenviron/mediamtx/releases/download/v{{ mediamtx_version }}/'
 mediamtx_package_name: 'mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}.tar.gz'
 mediamtx_dependencies:

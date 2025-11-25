@@ -23,17 +23,9 @@
   register: spi_state
   changed_when: false
 
-- name: Enable SPI
-  ansible.builtin.command:
-    cmd: 'raspi-config nonint do_spi 0'
-  when: spi_state.stdout | trim != '0'
-  register: spi_enable
-  notify: Reboot device
-
-- name: Flag reboot required (because SPI changed)
-  ansible.builtin.set_fact:
-    mediamtx_reboot_required: true
-  when: spi_enable is changed
+- name: Enable GPIO audio
+  ansible.builtin.include_tasks: enable_gpio_audio.yaml
+  when: gpio_audio | default(false)
 
 - name: Create MediaMTX user
   ansible.builtin.user:
