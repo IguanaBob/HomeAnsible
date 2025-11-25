@@ -136,4 +136,7 @@
     group: root
   notify: Reload systemd
 
-# TODO: Set mic volume level
+- name: Set mic capture level
+  ansible.builtin.command: amixer -c 0 set Capture 80%
+  changed_when: false
+  when: rpi_camera_usb_mic
