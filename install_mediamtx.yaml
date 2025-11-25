@@ -1,6 +1,6 @@
 ---
 - name: Install MediaMTX
-  hosts: all
+  hosts: picams:babycam:cameras:picamsir
   become: true
   gather_facts: true
   strategy: linear
