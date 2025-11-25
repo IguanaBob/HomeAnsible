@@ -9,6 +9,6 @@
     - name: Install MediaMTX
       include_role:
         name: mediamtx
-        tasks_from: install.yml
+        tasks_from: install.yaml
         vars_from: mediamtx.yaml
 
