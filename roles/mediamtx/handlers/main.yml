@@ -12,3 +12,9 @@
     enabled: true
   listen:
     - Restart mediamtx
+  when: not (mediamtx_reboot_required | default(false))
+
+- name: Reboot after SPI change
+  ansible.builtin.reboot:
+    msg: "Rebooting to apply SPI configuration change (SPI enabled)."
+    reboot_timeout: 600

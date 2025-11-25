@@ -15,9 +15,23 @@
     update_cache: true
   notify: Restart mediamtx
 
+- name: Check if SPI is already enabled
+  ansible.builtin.command:
+    cmd: 'raspi-config nonint get_spi'
+  register: spi_state
+  changed_when: false
+
 - name: Enable SPI
-  shell:
+  ansible.builtin.command:
     cmd: 'raspi-config nonint do_spi 0'
+  when: spi_state.stdout | trim != '0'
+  register: spi_enable
+  notify: Reboot after SPI change
+
+- name: Flag reboot required (because SPI changed)
+  ansible.builtin.set_fact:
+    mediamtx_reboot_required: true
+  when: spi_enable is changed
 
 - name: Create MediaMTX user
   ansible.builtin.user:
