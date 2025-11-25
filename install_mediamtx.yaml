@@ -10,3 +10,5 @@
       include_role:
         name: mediamtx
         tasks_from: install.yml
+        vars_from: mediamtx.yaml
+

@@ -1,6 +1,4 @@
 ---
-mediamtx_version: "1.12.3"
-mediamtx_arch: "arm64"
 rpi_camera_width: 1296
 rpi_camera_height: 972
 rpi_camera_fps: 15
