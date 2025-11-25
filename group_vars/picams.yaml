@@ -2,3 +2,4 @@
 rpi_camera_width: 1640
 rpi_camera_height: 1232
 rpi_camera_fps: 12
+pi_cam: true

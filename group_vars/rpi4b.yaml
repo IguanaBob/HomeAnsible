@@ -1,4 +1,4 @@
 ---
 btrfs_comp_norm: 1
 btrfs_comp_high: 3
-pi_firmware_update: True
+pi_firmware_update: true

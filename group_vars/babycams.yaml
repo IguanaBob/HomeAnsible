@@ -1,3 +1,4 @@
 ---
-usb_mic: True
-gpio_audio: True
+usb_mic: true
+gpio_audio: true
+pi_cam: true
