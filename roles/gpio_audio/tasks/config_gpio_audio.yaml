@@ -8,17 +8,13 @@
     owner: root
     group: root
     mode: '0755'
-  when:
-    - gpio_audio is defined
-    - gpio_audio
+  when: gpio_audio
+  notify: Reboot device
 
-# Reboot?
+- name: Reboot immediately so next command does not fail
+  ansible.builtin.meta: flush_handlers
 
 - name: Set audio mapping in raspi-config
   shell:
     cmd: raspi-config nonint do_audio 1
-
-# Reboot?
-
-# TODO: Set volume in alsamixer? How?
-
+  notify: Reboot device

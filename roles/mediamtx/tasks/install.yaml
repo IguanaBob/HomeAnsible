@@ -28,7 +28,7 @@
     cmd: 'raspi-config nonint do_spi 0'
   when: spi_state.stdout | trim != '0'
   register: spi_enable
-  notify: Reboot system
+  notify: Reboot device
 
 - name: Flag reboot required (because SPI changed)
   ansible.builtin.set_fact:

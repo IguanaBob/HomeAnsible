@@ -14,7 +14,7 @@
     - Restart mediamtx
   when: not (mediamtx_reboot_required | default(false))
 
-- name: Reboot system
+- name: Reboot device
   reboot:
     pre_reboot_delay: "{{ 15 | random(start=5) }}"  #Needed on some OS's, especially systemd based
     reboot_timeout: "{{ reboot_timeout | default(600) }}"
