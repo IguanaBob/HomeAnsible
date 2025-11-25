@@ -1,0 +1,16 @@
+---
+- name: Check if SPI is already enabled
+  ansible.builtin.command:
+    cmd: 'raspi-config nonint get_spi'
+  register: spi_state
+  changed_when: false
+
+- name: Enable SPI
+  ansible.builtin.command:
+    cmd: 'raspi-config nonint do_spi 0'
+  when: spi_state.stdout | trim != '0'
+  register: spi_enable
+  notify: Reboot device
+
+- name: Reboot immediately so later commands do not fail
+  ansible.builtin.meta: flush_handlers

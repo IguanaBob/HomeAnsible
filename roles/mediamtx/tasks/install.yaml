@@ -17,11 +17,8 @@
   when: mediamtx_missing_packages | length > 0
   notify: Restart mediamtx
 
-- name: Check if SPI is already enabled
-  ansible.builtin.command:
-    cmd: 'raspi-config nonint get_spi'
-  register: spi_state
-  changed_when: false
+- name: Enable SPI interface
+  ansible.builtin.include_tasks: enable_spi.yaml
 
 - name: Enable GPIO audio
   ansible.builtin.include_tasks: enable_gpio_audio.yaml
@@ -129,6 +126,4 @@
   notify: Reload systemd
 
 - name: Set mic capture level
-  ansible.builtin.command: amixer -c 0 set Capture 80%
-  changed_when: false
-  when: usb_mic
+  ansible.builtin.include_tasks: set_volume.yaml
