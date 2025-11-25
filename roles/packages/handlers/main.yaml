@@ -1,0 +1,7 @@
+---
+- name: Reboot system
+  reboot:
+    pre_reboot_delay: "{{ 15 | random(start=5) }}"  #Needed on some OS's, especially systemd based
+    reboot_timeout: "{{ reboot_timeout | default(600) }}"
+    post_reboot_delay: "{{ post_reboot_delay | default(60) }}"
+    test_command: hostname

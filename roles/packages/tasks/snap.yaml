@@ -8,6 +8,7 @@
       changed_when:
         - snap_refresh.rc == 0
         - '"All snaps up to date" not in snap_refresh.stderr'
+      notify: Reboot system
 
     - name: snap output
       debug:

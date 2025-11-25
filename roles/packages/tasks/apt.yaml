@@ -6,6 +6,7 @@
     cache_valid_time: 3600
     state: latest
   register: update_output
+  notify: Reboot system
 
 - name: Updates
   debug:
@@ -15,3 +16,4 @@
   ansible.builtin.apt:
     autoremove: yes
   when: ansible_facts.packages['apt']
+  notify: Reboot system

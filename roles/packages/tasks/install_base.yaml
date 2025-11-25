@@ -7,5 +7,6 @@
   package:
     state: latest
     name: '{{ base_packages }}'
+  notify: Reboot system
 
 - include_tasks: remount.yaml

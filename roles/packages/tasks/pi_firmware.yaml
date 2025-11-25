@@ -23,11 +23,13 @@
         - rpi_eeprom_update_bootloader.rc != 0
         - "'BOOTLOADER: update available' not in rpi_eeprom_update_bootloader.stdout"
         - "'UPDATE AVAILABLE' not in rpi_eeprom_update_bootloader.stdout"
+      notify: Reboot system
 
     - name: Update Raspberry Pi firmware
       ansible.builtin.shell:
         cmd: rpi-eeprom-update -a
       register: rpi_eeprom_update_firmware
+      notify: Reboot system
   when:
     - rpi_eeprom_update is defined
     - rpi_eeprom_update.rc is defined
