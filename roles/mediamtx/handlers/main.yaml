@@ -12,7 +12,6 @@
     enabled: true
   listen:
     - Restart mediamtx
-  when: not (mediamtx_reboot_required | default(false))
 
 - name: Reboot device
   reboot:
@@ -20,4 +19,3 @@
     reboot_timeout: "{{ reboot_timeout | default(600) }}"
     post_reboot_delay: "{{ post_reboot_delay | default(60) }}"
     test_command: hostname
-  listen: mediamtx_reboot_requried
