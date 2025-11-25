@@ -43,9 +43,11 @@
     comment: "User for running MediaMTX service"
   notify: Restart mediamtx
 
-- name: Ensure MediaMTX user has access to the camera
-  ansible.builtin.command:
-    cmd: usermod -a -G video,audio mediamtx
+- name: Ensure MediaMTX user has access to camera and audio
+  ansible.builtin.user:
+    name: mediamtx
+    groups: video,audio
+    append: true
   notify: Restart mediamtx
 
 - name: Create log directory for MediaMTX
