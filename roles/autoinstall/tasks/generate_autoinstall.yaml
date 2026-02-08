@@ -27,7 +27,7 @@
         - "meta-data"
         - "vendor-data"
 
-    - name: Generate autoinstall scirpt
+    - name: Generate autoinstall script
       template:
         dest: "/var/www/html/autoinstall-gen/{{ inventory_hostname }}/user-data"
         src: user-data.j2
@@ -35,4 +35,24 @@
   when: "'-server' in autoinstall_os"
   delegate_to: localhost
 
-## Need section for desktop
+- block:
+  # Desktop version
+
+    - name: Generate stub autoinstall files if this is a desktop version
+      copy:
+        content: ""
+        dest: "/var/www/html/autoinstall-gen/{{ inventory_hostname }}/{{ item }}"
+        owner: root
+        group: root
+        mode: "0664"
+      with_items:
+        - "meta-data"
+        - "vendor-data"
+
+    - name: Generate autoinstall script
+      template:
+        dest: "/var/www/html/autoinstall-gen/{{ inventory_hostname }}/autoinstall.yaml"
+        src: user-data.j2
+
+  when: "'-server' not in autoinstall_os"
+  delegate_to: localhost
