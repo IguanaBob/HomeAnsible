@@ -53,6 +53,7 @@
   ansible.builtin.stat:
     path: "/tmp/mediamtx_v{{ mediamtx_version }}_checksums.sha256"
   register: mediamtx_checksums_stat
+  run_once: true
 
 - name: Retrieve mediamtx checksum index
   delegate_to: localhost
@@ -62,6 +63,7 @@
     mode: "0644"
     force: no
   when: not mediamtx_checksums_stat.stat.exists
+  run_once: true
 
 - name: Extract SHA256 for desired package
   delegate_to: localhost
@@ -73,6 +75,7 @@
           | select('search', mediamtx_package_name)
           | first
         ).split()[0] }}
+  run_once: true
 
 - name: Download mediamtx package to controller
   delegate_to: localhost
@@ -82,6 +85,7 @@
     mode: "0644"
     checksum: "sha256:{{ image_sha256 }}"
     force: no
+  run_once: true
 
 - name: Ensure mediamtx extract dir exists on controller
   delegate_to: localhost
@@ -89,6 +93,7 @@
     path: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}"
     state: directory
     mode: "0755"
+  run_once: true
 
 - name: Extract mediamtx package on controller
   delegate_to: localhost
@@ -97,6 +102,7 @@
     dest: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}"
     remote_src: true
     creates: "/tmp/mediamtx_v{{ mediamtx_version }}_{{ mediamtx_arch }}/mediamtx"
+  run_once: true
 
 - name: Install mediamtx binary on device
   ansible.builtin.copy:
