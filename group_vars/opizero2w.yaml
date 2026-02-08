@@ -1,7 +1,7 @@
 ---
-# Settings tested as best for:
-# Orange Pi Zero 2 W
-# We may want to just detect the CPU later, but for now I have manual groups.
-
 btrfs_comp_norm: 1
 btrfs_comp_high: 3
+
+openwrt_arch: 'bcm27xx'
+openwrt_cpu: 'bcm2710'
+openwrt_model: 'rpi-3-squashfs'
