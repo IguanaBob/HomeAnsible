@@ -6,7 +6,7 @@
   strategy: linear
   vars_files:
     - "{{ 'private/vars/luks_common.yaml' if (autoinstall_encrypt_disk | default(False)) else omit }}"
-    - "{{ 'private/vars/' + inventory_hostname + '.yaml' if (autoinstall_encrypt_disk | default(False)) else omit }}"
+    # - "{{ 'private/vars/' + inventory_hostname + '.yaml' if (autoinstall_encrypt_disk | default(False)) else omit }}"
   tasks:
 
     - name: Generate autoinstall for cloud-init
