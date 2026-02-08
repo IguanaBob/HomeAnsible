@@ -131,5 +131,5 @@
     group: root
   notify: Reload systemd
 
-- name: Set mic capture level
-  ansible.builtin.include_tasks: set_volume.yaml
+# - name: Set mic capture level
+#   ansible.builtin.include_tasks: set_volume.yaml
