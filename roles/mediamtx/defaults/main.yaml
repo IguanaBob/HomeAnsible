@@ -3,6 +3,8 @@ rpi_camera_width: 1296
 rpi_camera_height: 972
 rpi_camera_fps: 15
 usb_mic: false
+usb_mic_raw_level: 13  # ~80% inrange 0-16 for our USB mics (make this dynamic later)
+gpio_audio_raw_level: -1728  # ~80% in range -10239-400 for our speaker HAT (make this dynamic later)
 pi_cam: true
 gpio_audio: false
 mediamtx_dl_base: 'https://github.com/bluenviron/mediamtx/releases/download/v{{ mediamtx_version }}/'
