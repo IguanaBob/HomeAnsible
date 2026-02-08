@@ -8,14 +8,14 @@ autoinstall:
 {% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
     # LUKS key USB
     # Reuses existing key rather than overwriting.
-    mkdir /mnt/usbkey
-    mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid }} /mnt/usbkey
-    if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
-      # Key does not exist, generate it.
-      mount -o rw,remount /mnt/usbkey
-      dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
-      mount -o ro,remount /mnt/usbkey || (exit 0)
-    fi
+    # mkdir /mnt/usbkey
+    # mount -o ro /dev/disk/by-uuid/{{ luks_key_device_uuid | default (omit) }} /mnt/usbkey
+    # if [ ! -f /mnt/usbkey/{{ inventory_hostname }}.key ]; then
+    #   # Key does not exist, generate it.
+    #   mount -o rw,remount /mnt/usbkey
+    #   dd if=/dev/random of=/mnt/usbkey/{{ inventory_hostname }}.key bs=256 count=1
+    #   mount -o ro,remount /mnt/usbkey || (exit 0)
+    # fi
 {% endif %}
 
   refresh-installer:
@@ -103,7 +103,8 @@ autoinstall:
       - id: pvpart-crypt
         type: dm_crypt
         volume: pvpart
-        keyfile: "/mnt/usbkey/{{ inventory_hostname }}.key"
+        key: {{ autoinstall_luks_passphrase }}
+        # keyfile: "/mnt/usbkey/{{ inventory_hostname }}.key"
 {% endif %}
 
       - id: vg0
@@ -173,6 +174,7 @@ autoinstall:
         path: /
         device: root_lv_fs
         options: compress-force=zstd:{{ btrfs_comp_high | default("3") }},ssd,noatime,nodiratime  #ssd/hdd check needed
+
   late-commands:
   - |
     set -ex
@@ -298,9 +300,9 @@ autoinstall:
     # what is sgtlauncher
     
 {% if autoinstall_encrypt_disk is defined and autoinstall_encrypt_disk %}
-    # LUKS key USB
-    sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
-    chroot /mnt/rootfs update-initramfs -k all -u
+    ## LUKS key USB
+    # sed -i -e 's| none | /dev/disk/by-uuid/{{ luks_key_device_uuid | default (omit) }}:/{{ inventory_hostname }}.key |' -e 's| luks$| luks,discard,keyscript=/lib/cryptsetup/scripts/passdev|' /mnt/rootfs/etc/crypttab
+    # chroot /mnt/rootfs update-initramfs -k all -u
 {% endif %}
     
     ### Cleanup
