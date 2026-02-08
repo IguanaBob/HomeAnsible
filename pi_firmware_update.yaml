@@ -1,0 +1,11 @@
+---
+- name: Install package updates
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Install package updates
+      include_role:
+        name: packages
+        tasks_from: pi_firmware.yaml
