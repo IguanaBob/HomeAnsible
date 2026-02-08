@@ -1,0 +1,131 @@
+---
+- name: Get ALSA cards
+  ansible.builtin.command: cat /proc/asound/cards
+  register: alsa_cards
+  changed_when: false
+
+
+### USB Mic ###
+
+- name: Detect USB mic card index (if present)
+  ansible.builtin.shell: "awk '/USB/ {print $1}' /proc/asound/cards | head -n1"
+  register: usb_mic_card_cmd
+  changed_when: false
+
+- name: Set usb_mic_card_index fact
+  ansible.builtin.set_fact:
+    usb_mic_card_index: "{{ usb_mic_card_cmd.stdout | trim }}"
+  when: usb_mic_card_cmd.stdout | trim != ''
+
+- name: Detect USB mic control name (first control)
+  ansible.builtin.shell: >
+    cmd: amixer -c {{ usb_mic_card_index }} scontrols | awk -F"'" '/Simple mixer control/ {print $2; exit}'
+  register: usb_mic_control_cmd
+  changed_when: false
+  when: usb_mic_card_index is defined
+
+- name: Set usb_mic_control fact
+  ansible.builtin.set_fact:
+    usb_mic_control: "{{ usb_mic_control_cmd.stdout | trim }}"
+  when:
+    - usb_mic_card_index is defined
+    - usb_mic_control_cmd.stdout | trim != ''
+
+- name: Get current USB mic raw capture level
+  ansible.builtin.command:
+    cmd: "amixer -c {{ usb_mic_card_index }} get {{ usb_mic_control }}"
+  register: usb_mic_get
+  changed_when: false
+  when:
+    - usb_mic | default(false)
+    - usb_mic_card_index is defined
+    - usb_mic_control | length > 0
+
+- name: Parse current USB mic raw level
+  ansible.builtin.set_fact:
+    usb_mic_raw_current: >-
+      {{ usb_mic_get.stdout | regex_search('Mono: Capture (\\d+)', '\1') | default('0') | int }}
+  when:
+    - usb_mic | default(false)
+    - usb_mic_card_index is defined
+    - usb_mic_control | length > 0
+
+- name: Set USB mic capture raw level (only if different)
+  ansible.builtin.command:
+    cmd: amixer -c {{ usb_mic_card_index }} set {{ usb_mic_control }} {{ usb_mic_raw_level }}"
+  when:
+    - usb_mic | default(false)
+    - usb_mic_card_index is defined
+    - usb_mic_control | length > 0
+    - usb_mic_raw_current is defined
+    - usb_mic_raw_current != usb_mic_raw_level
+  # default changed_when is fine here
+
+# Need to add optional mute if undefined
+
+### GPIO HAT Speakers ###
+
+- name: Detect GPIO audio card index (if present)
+  ansible.builtin.shell:
+    cmd: "awk '/Headphones/ {print $1}' /proc/asound/cards | head -n1"
+  register: gpio_audio_card_cmd
+  changed_when: false
+
+- name: Set gpio_audio_card_index fact
+  ansible.builtin.set_fact:
+    gpio_audio_card_index: "{{ gpio_audio_card_cmd.stdout | trim }}"
+  when: gpio_audio_card_cmd.stdout | trim != ''
+
+- name: List ALSA controls on GPIO audio card
+  ansible.builtin.command:
+    argv:
+      - amixer
+      - -c
+      - "{{ gpio_audio_card_index }}"
+      - scontrols
+  register: gpio_audio_scontrols
+  changed_when: false
+  when:
+    - gpio_audio_card_index is defined
+    - gpio_audio_card_index | length > 0
+
+- name: Pick GPIO audio control (prefer PCM, else first)
+  ansible.builtin.set_fact:
+    gpio_audio_control: >-
+      {{
+        (
+          gpio_audio_scontrols.stdout.splitlines()
+          | select('search', "Simple mixer control 'PCM'")
+          | map('regex_replace', "^Simple mixer control '([^']+)'.*$", "\\1")
+          | list | first
+        )
+        or
+        (
+          gpio_audio_scontrols.stdout.splitlines()
+          | select('search', "Simple mixer control")
+          | map('regex_replace', "^Simple mixer control '([^']+)'.*$", "\\1")
+          | list | first
+        )
+        | default('')
+      }}
+  when: gpio_audio_card_index is defined
+
+- name: Set GPIO audio speaker level
+  ansible.builtin.command: >
+    amixer -c {{ gpio_audio_card_index }} set {{ gpio_audio_control }} 80%
+  changed_when: false
+  when:
+    - gpio_audio | default(false)
+    - gpio_audio_card_index is defined
+    - gpio_audio_control | length > 0
+
+# - name: Mute GPIO audio speaker
+#   ansible.builtin.command: >
+#     amixer -c {{ gpio_audio_card_index }} set {{ gpio_audio_control }} 0%
+#   changed_when: false
+#   when:
+#     - not gpio_audio | default(false)
+#     - gpio_audio_card_index is defined
+#     - gpio_audio_control | length > 0
+
+# Need to add optional mute if undefined
