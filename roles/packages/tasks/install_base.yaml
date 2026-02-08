@@ -9,4 +9,11 @@
     name: '{{ base_packages }}'
   notify: Reboot system
 
+- name: Install/update additional packages
+  package:
+    state: latest
+    name: '{{ additional_packages | default(omit) }}'
+  notify: Reboot system
+  when: additional_packages is defined and additional_packages | length > 0
+
 - include_tasks: remount.yaml
