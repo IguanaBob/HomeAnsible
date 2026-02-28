@@ -1,0 +1,12 @@
+---
+#Reboot system
+- name: Restart service 
+  hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+
+    - name: Restart service
+      service:
+        name: "{{ service_name }}"
+        state: restarted
