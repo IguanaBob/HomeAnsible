@@ -1,19 +1,18 @@
 ---
-- name: Update packages
-  ansible.builtin.apt:
-    name: "*"
-    update_cache: yes
-    cache_valid_time: 3600
-    state: latest
-  register: update_output
-  notify: Reboot system
+- name: Update with apt
+  when: ansible_pkg_mgr == "apt"
+  block: 
 
-- name: Updates
-  debug:
-    msg: "{{ update_output.stdout_lines }}"
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: full
+        autoremove: true
+      register: apt_result
+      notify: Reboot system
+      changed_when: apt_result.changed
 
-- name: Autoremove
-  ansible.builtin.apt:
-    autoremove: yes
-  when: ansible_facts.packages['apt']
-  notify: Reboot system
+    - name: Show apt changes (summary)
+      ansible.builtin.debug:
+        msg: "{{ apt_result }}"
