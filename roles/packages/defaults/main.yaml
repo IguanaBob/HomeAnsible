@@ -2,4 +2,7 @@
 btrfs_compressed_mounts: []
 force_gather_package_facts: True
 pi_firmware_update: False
+mirror_efi: False
+efi_src: /boot/efi/
+efi_dest: /boot/efi2/
 btrfs_comp_high: 2
