@@ -1,10 +1,14 @@
 ---
-- name: If / is btrfs, remount with highest compression
+- name: Remount btrfs mounts with higher compression
+  become: true
   ansible.posix.mount:
-    path: /
+    path: "{{ item }}"
     state: remounted
-    opts: "compress-force=zstd:{{ btrfs_comp_high | default(3) }}"
-  when: >
-    (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | list | first) is defined
-    and
-    (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | list | first == 'btrfs')
+    opts: "compress-force=zstd:{{ btrfs_comp_high | default(2) }}"
+  loop: "{{ btrfs_compressed_mounts }}"
+  when:
+    - (ansible_mounts
+        | selectattr('mount', 'equalto', item)
+        | map(attribute='fstype')
+        | first
+        | default('')) == 'btrfs'

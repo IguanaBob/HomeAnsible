@@ -1,3 +1,5 @@
 ---
+btrfs_compressed_mounts: []
 force_gather_package_facts: True
 pi_firmware_update: False
+btrfs_comp_high: 2
