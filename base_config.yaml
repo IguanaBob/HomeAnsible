@@ -19,3 +19,4 @@
       include_role:
         name: debloat
         tasks_from: unbuntu.yaml
+      when: ansible_distribution == "Ubuntu"
