@@ -1,6 +1,6 @@
 ---
 - name: fstrim
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: fstrim -Av
   register: fstrim
   changed_when: >
