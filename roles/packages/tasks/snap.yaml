@@ -1,5 +1,11 @@
 ---
 - block:
+  when:
+    - ansible_facts is defined
+    - ansible_facts.packages is defined
+    - ansible_facts.packages['snapd'] is defined
+    - ansible_facts.packages['snapd']
+    - ( dpkg_snapd is defined and dpkg_snapd.rc is defined and dpkg_snapd.rc == 0 )
 
     - name: Update snaps
       ansible.builtin.shell:
@@ -14,9 +20,3 @@
       debug:
         msg: "{{ snap_refresh.stderr_lines }}"
 
-  when:
-    - ansible_facts is defined
-    - ansible_facts.packages is defined
-    - ansible_facts.packages['snapd'] is defined
-    - ansible_facts.packages['snapd']
-    - ( dpkg_snapd is defined and dpkg_snapd.rc is defined and dpkg_snapd.rc == 0 )

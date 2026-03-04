@@ -22,6 +22,7 @@
     cmd: timedatectl set-timezone America/Chicago
   when: current_timezone.stdout != "America/Chicago"
 
+# Ubuntu / Debian: systemd-timesyncd
 - name: Set NTP server in timesyncd configuration
   ansible.builtin.lineinfile:
     path: /etc/systemd/timesyncd.conf
@@ -29,6 +30,18 @@
     line: 'NTP=192.168.0.1'
     state: present
   notify: restart timesyncd
+  when: ansible_facts['os_family'] == 'Debian'
+
+# Alma / RHEL-family: chrony
+- name: Set NTP server in chrony configuration (RHEL/Alma)
+  ansible.builtin.lineinfile:
+    path: /etc/chrony.conf
+    regexp: '^server\s+192\.168\.0\.1(\s|$)'
+    line: 'server 192.168.0.1 iburst'
+    state: present
+    insertafter: '^(#\s*)?(pool|server)\s+'
+  notify: restart chronyd
+  when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Disable IPv6 in sysctl
   ansible.builtin.sysctl:

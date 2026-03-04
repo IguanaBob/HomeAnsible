@@ -2,7 +2,7 @@
 - name: Install btrbk and dependencies
   package:
     name:
-      - btrbk
+      - btrbk #ubuntu only
       - btrfs-progs
       - mbuffer
       - zstd

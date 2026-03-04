@@ -7,15 +7,21 @@
   when: |
     ( ansible_facts.packages['snapd'] | default(false) | bool )
     or ( dpkg_snapd is defined and dpkg_snapd.rc is defined and dpkg_snapd.rc == 0 )
+    or ( rpm_snapd is defined and rpm_snapd.rc is defined and rpm_snapd.rc == 0 )
 
 - include_tasks: apt.yaml
-  when: ansible_facts.packages['apt']
+  when: ansible_pkg_mgr == "apt"
+
+- include_tasks: dnf.yaml
+  when: ansible_pkg_mgr in ["dnf", "yum"]
 
 - include_tasks : pi_firmware.yaml
-  when: pi_firmware_update
+  when: pi_firmware_update | default(false) | bool
 
 - include_tasks: remount.yaml
 
+- include_tasks: mirror_efi.yaml
+  when: mirror_efi | default(false) | bool
 ### need dnf/yum equiv
 
 - name: fstrim

@@ -1,0 +1,25 @@
+---
+- name: Update with dnf
+  when: ansible_pkg_mgr in ["dnf", "yum"]
+  block:
+
+    - name: Upgrade packages with dnf
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      register: dnf_upgrade
+      notify: Reboot system
+
+    - name: Show dnf changes (summary)
+      ansible.builtin.debug:
+        msg: "{{ dnf_upgrade }}"
+
+    - name: Autoremove unneeded packages
+      ansible.builtin.dnf:
+        autoremove: true
+      register: dnf_autoremove
+
+    - name: Show dnf autoremove changes (summary)
+      ansible.builtin.debug:
+        msg: "{{ dnf_autoremove }}"

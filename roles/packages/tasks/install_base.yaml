@@ -3,17 +3,35 @@
 
 - include_tasks: upcompression.yaml
 
-- name: Install/update base packages
-  package:
+- name: Set base_packages_distro for Ubuntu/Debian
+  ansible.builtin.set_fact:
+    base_packages_distro: "{{ base_packages_ubuntu }}"
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Set base_packages_distro for RHEL/Alma
+  ansible.builtin.set_fact:
+    base_packages_distro: "{{ base_packages_rhel }}"
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Install base and extra packages
+  ansible.builtin.package:
+    name: "{{ base_packages + (base_packages_distro | default([])) + (additional_packages | default([])) }}"
     state: latest
-    name: '{{ base_packages }}'
   notify: Reboot system
 
-- name: Install/update additional packages
-  package:
-    state: latest
-    name: '{{ additional_packages | default(omit) }}'
-  notify: Reboot system
-  when: additional_packages is defined and additional_packages | length > 0
+# - name: Install/update base packages
+#   package:
+#     state: latest
+#     name: '{{ base_packages }}'
+#   notify: Reboot system
+
+# - name: Install/update additional packages
+#   package:
+#     state: latest
+#     name: '{{ additional_packages | default(omit) }}'
+#   notify: Reboot system
+#   when: additional_packages is defined and additional_packages | length > 0
+
+##### Snap/flatpak/etc?
 
 - include_tasks: remount.yaml

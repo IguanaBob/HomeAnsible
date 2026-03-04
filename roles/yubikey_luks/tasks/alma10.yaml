@@ -1,0 +1,22 @@
+---
+
+# EPEL first?
+
+- name: Install required packages for AlmaLinux 10
+  package:
+    name: "{{ required_packages_alma_10 }}"
+    state: present
+  when: ansible_distribution == "AlmaLinux" and ansible_distribution_major_version == "10"
+
+# PIP packages
+
+#enroll stuff with systemd-cryptenroll or whatever
+
+# sudo dracut -f
+
+# xI created /etc/dracut.conf.d/fido2.conf with:
+# add_dracutmodules+=" fido2 "
+# dracut -fv
+
+# reboot
+# on boot, enter pin, hit button on yubikey for each volume being unlocked

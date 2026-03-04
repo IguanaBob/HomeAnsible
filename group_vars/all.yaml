@@ -5,16 +5,24 @@ base_packages:
   - pv
   - pigz
   - zstd
-    #  - btrfs-compsize
-    #  - btrfs-progs
-    #  - btrbk
   - btop
-    #  - tailscale
-    #  - net-tools
   - file
   - postfix
-  - libsasl2-modules
   - smartmontools
+  - rsync
+  - tar
+  - screen
+  - htop
+  - bash-completion
+  - curl
+  - wget
+  - btop
+  - btrfs-progs
+base_packages_rhel:
+  - compsize
+base_packages_ubuntu:
+  - btrfs-compsize
+  - libsasl2-modules
 
 ansible_ssh_private_key_file: /root/.ssh/svc_ansible
 ansible_user: svc_ansible
