@@ -1,0 +1,10 @@
+---
+# Mirror the EFI partition to 2nd boot disk.
+
+- name: Mirror /boot/efi to /boot/efi2
+  become: true
+  ansible.posix.synchronize:
+    src: /boot/efi/
+    dest: /boot/efi2/
+    archive: true
+    delete: true
