@@ -1,0 +1,10 @@
+---
+nfs_server_packages:
+  RedHat:
+    - nfs-utils
+  Debian:
+    - nfs-kernel-server
+
+nfs_server_service:
+  RedHat: nfs-server
+  Debian: nfs-kernel-server

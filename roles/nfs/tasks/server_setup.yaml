@@ -1,0 +1,30 @@
+---
+- name: Install NFS server packages
+  ansible.builtin.package:
+    name: "{{ nfs_server_packages[ansible_facts['os_family']] }}"
+    state: present
+  notify:
+    - reload exports
+    - restart nfs
+
+- name: Ensure export paths exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ nfs_exports | list | unique }}"
+
+- name: Deploy /etc/exports
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify:
+    - reload exports
+    - restart nfs
+

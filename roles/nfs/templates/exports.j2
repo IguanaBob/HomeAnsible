@@ -1,0 +1,7 @@
+# {{ ansible_managed | default('Managed by Ansible') }}
+
+{% for export in nfs_exports %}
+# {{ export.section_name }}
+{{ export.path }} {{ export.network }}({{ export.options }})
+
+{% endfor %}

@@ -24,6 +24,13 @@
         name: firewalld
       when: nfs_server | default(false) | bool
 
+    - name: NFS server setup
+      include_role:
+        name: nfs
+        tasks_from: nfs-server-setup.yaml
+        vars_from: server.yaml
+      when: nfs_server | default(false) | bool
+
     - name: UNbuntify
       include_role:
         name: debloat

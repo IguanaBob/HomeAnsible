@@ -1,0 +1,13 @@
+---
+- name: Setup NFS server
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Setup NFS server
+      include_role:
+        name: nfs
+        tasks_from: server_setup.yaml
+        vars_from: server.yaml
+      when: nfs_server | default(false) | bool
