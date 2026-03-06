@@ -110,20 +110,24 @@
     create: true
     state: present
 
+- name: Set grub editenv command by OS family
+  ansible.builtin.set_fact:
+    grub_editenv_cmd: "{{ 'grub-editenv' if ansible_os_family == 'Debian' else 'grub2-editenv' }}"
+
 - name: Read grub environment
   ansible.builtin.command:
-    cmd: grub2-editenv - list
+    cmd: "{{ grub_editenv_cmd }} - list"
   register: grubenv
   changed_when: false
 
 - name: Ensure grub menu auto hide is disabled
   ansible.builtin.command:
-    cmd: grub2-editenv - set menu_auto_hide=0
+    cmd: "{{ grub_editenv_cmd }} - set menu_auto_hide=0"
   when: "'menu_auto_hide=0' not in grubenv.stdout"
 
 - name: Ensure boot_success is unset
   ansible.builtin.command:
-    cmd: grub2-editenv - unset boot_success
+    cmd: "{{ grub_editenv_cmd }} - unset boot_success"
   when: "'boot_success=' in grubenv.stdout"
 
 - name: Set grub timeout
