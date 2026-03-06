@@ -9,20 +9,23 @@
       include_role:
         name: packages
         tasks_from: install_base.yaml
-      reboot: false
+      vars:
+        allow_reboot: false
 
     - name: Base configuration
       include_role:
         name: base_config
         tasks_from: basic_setup.yaml
-      reboot: false
+      vars:
+        allow_reboot: false
 
     - name: UNbuntify
       include_role:
         name: debloat
         tasks_from: unbuntu.yaml
       when: ansible_distribution == "Ubuntu"
-      reboot: false
+      vars:
+        allow_reboot: false
 
     - name: Check if reboot is required on Debian/Ubuntu
       ansible.builtin.stat:
