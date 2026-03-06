@@ -1,0 +1,21 @@
+---
+- name: Setup Yubikey FIDO2 LUKS
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Setup Yubikey FIDO2 LUKS
+      include_role:
+        name: yubikey_fido2_luks
+      when: yubikey_fido2_luks | default(false) | bool
+
+    - name: Reboot system
+      ansible.builtin.reboot:
+        pre_reboot_delay: "{{ 15 | random(start=5) }}"
+        reboot_timeout: "{{ reboot_timeout | default(600) }}"
+        post_reboot_delay: "{{ post_reboot_delay | default(60) }}"
+        test_command: hostname
+      when:
+        - allow_reboot | default(false) | bool
+        - reboot_needed | default(false) | bool

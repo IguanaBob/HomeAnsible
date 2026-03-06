@@ -1,0 +1,11 @@
+---
+- name: rebuild initramfs (RHEL/Alma)
+  ansible.builtin.command:
+    cmd: dracut -f
+  when: ansible_facts['os_family'] == 'RedHat'
+  listen: rebuild initramfs
+
+- name: Set reboot_needed fact after initramfs rebuild
+  ansible.builtin.set_fact:
+    reboot_needed: true
+  listen: rebuild initramfs

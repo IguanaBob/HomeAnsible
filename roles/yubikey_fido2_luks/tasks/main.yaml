@@ -1,0 +1,29 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ required_packages_rhel }}"
+    state: present
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Enable fido2 module in initramfs (RHEL/Alma)
+  ansible.builtin.copy:
+    dest: /etc/dracut.conf.d/fido2.conf
+    content: 'add_dracutmodules+=" fido2 "'
+    mode: '0644'
+    owner: root
+    group: root
+  when: ansible_facts['os_family'] == 'RedHat'
+  notify: rebuild initramfs
+
+- name: Notify user about manual steps
+  ansible.builtin.debug:
+    msg: "NOTE: If not already done, you must manually enroll the YubiKey for FIDO2 LUKS unlocking using 'systemd-cryptenroll --fido2-device=auto <disk>' for each encrypted disk."
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Notify user about how many presses of the Yubikey are needed
+  ansible.builtin.debug:
+    msg: "NOTE: You will need to press the Yubikey {{ luks_disks | length }} times during boot to unlock all encrypted disks."
+  when: ansible_facts['os_family'] == 'RedHat'
+
+# Disable passphrase slots?
+# Add chal/response for ubuntu
