@@ -19,6 +19,11 @@
       vars:
         allow_reboot: false
 
+    - name: Configure firewalld
+      include_role:
+        name: firewalld
+      when: nfs_server | default(false) | bool
+
     - name: UNbuntify
       include_role:
         name: debloat

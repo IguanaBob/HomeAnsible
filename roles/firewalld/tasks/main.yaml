@@ -1,0 +1,58 @@
+---
+- name: Ensure firewalld is installed
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Create firewalld zones
+  ansible.posix.firewalld:
+    zone: "{{ item.name }}"
+    state: present
+    permanent: true
+  loop: "{{ firewalld_zones }}"
+  notify: reload firewalld
+
+- name: Enable services in firewalld zones
+  ansible.posix.firewalld:
+    zone: "{{ item.0.name }}"
+    service: "{{ item.1 }}"
+    state: enabled
+    permanent: true
+  loop: "{{ firewalld_zones | subelements('services', skip_missing=True) }}"
+  notify: reload firewalld
+
+- name: Add source to firewalld zones
+  ansible.posix.firewalld:
+    zone: "{{ item.name }}"
+    source: "{{ item.source }}"
+    state: enabled
+    permanent: true
+  loop: "{{ firewalld_zones }}"
+  when: item.source is defined
+  notify: reload firewalld
+
+- name: Add interfaces to firewalld zones
+  ansible.posix.firewalld:
+    zone: "{{ item.0.name }}"
+    interface: "{{ item.1 }}"
+    state: enabled
+    permanent: true
+  loop: "{{ firewalld_zones | subelements('interfaces', skip_missing=True) }}"
+  notify: reload firewalld
+
+- name: Remove services from public zone
+  ansible.posix.firewalld:
+    zone: public
+    service: "{{ item}}"
+    state: disabled
+    permanent: true
+  loop:
+    - ssh
+    - cockpit
+  notify: reload firewalld
