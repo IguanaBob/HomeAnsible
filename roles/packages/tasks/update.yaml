@@ -19,6 +19,9 @@
   when: pi_firmware_update | default(false) | bool
 
 - include_tasks: remount.yaml
+  when: 
+    - not reboot_needed | default(false) | bool
+    - not allow_reboot | default(false) | bool
 
 - include_tasks: mirror_efi.yaml
   when: mirror_efi | default(false) | bool

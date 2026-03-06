@@ -17,7 +17,6 @@
   ansible.builtin.package:
     name: "{{ base_packages + (base_packages_distro | default([])) + (additional_packages | default([])) }}"
     state: latest
-  notify: Reboot system
 
 # - name: Install/update base packages
 #   package:

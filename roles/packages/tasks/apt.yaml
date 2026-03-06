@@ -10,7 +10,6 @@
         upgrade: full
         autoremove: true
       register: apt_result
-      notify: Reboot system
       changed_when: apt_result.changed
 
     - name: Show apt changes (summary)

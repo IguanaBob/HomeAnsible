@@ -9,7 +9,6 @@
         state: latest
         update_cache: true
       register: dnf_upgrade
-      notify: Reboot system
 
     - name: Show dnf changes (summary)
       ansible.builtin.debug:

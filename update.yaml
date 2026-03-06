@@ -12,18 +12,48 @@
         name: packages
         tasks_from: update.yaml
       vars:
-        reboot: false
+        allow_reboot: false
 
     - name: Run base configuration tasks
       include_role:
         name: base_config
         tasks_from: basic_setup.yaml
       vars:
-        reboot: false
+        allow_reboot: false
     
+    - name: Check if reboot is required on Debian/Ubuntu
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: debian_reboot_required
+      when: ansible_os_family == 'Debian'
+
+    - name: Check if reboot is required on RHEL/Alma
+      ansible.builtin.command:
+        cmd: needs-restarting -r
+      register: rhel_reboot_required
+      changed_when: false
+      failed_when: false
+      when: ansible_os_family == 'RedHat'
+
+    - name: Set reboot_needed fact
+      ansible.builtin.set_fact:
+        reboot_needed: >-
+          {{
+            (ansible_os_family == 'Debian' and (debian_reboot_required.stat.exists | default(false)))
+            or
+            (ansible_os_family == 'RedHat' and (rhel_reboot_required.rc | default(1)) == 1)
+          }}
+
+    - name: Show reboot status
+      ansible.builtin.debug:
+        msg: "Reboot needed: {{ reboot_needed | bool }}"
+
     - name: Reboot system
-      reboot:
-        pre_reboot_delay: "{{ 15 | random(start=5) }}"  #Needed on some OS's
+      ansible.builtin.reboot:
+        pre_reboot_delay: "{{ 15 | random(start=5) }}"
         reboot_timeout: "{{ reboot_timeout | default(600) }}"
         post_reboot_delay: "{{ post_reboot_delay | default(60) }}"
         test_command: hostname
+      when:
+        - allow_reboot | default(true) | bool
+        - reboot_needed | default(false) | bool
