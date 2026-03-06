@@ -43,18 +43,6 @@
   notify: restart chronyd
   when: ansible_facts['os_family'] == 'RedHat'
 
-- name: Disable IPv6 in sysctl
-  ansible.builtin.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    sysctl_set: yes
-    sysctl_file: /etc/sysctl.d/99-disable-ipv6.conf
-    reload: false
-  loop:
-    - { name: "net.ipv6.conf.all.disable_ipv6", value: "1" }
-    - { name: "net.ipv6.conf.default.disable_ipv6", value: "1" }
-    - { name: "net.ipv6.conf.lo.disable_ipv6", value: "1" }
-
 # Temporary until it's removed from /etc/sysctl.conf on all hosts as we set this in /etc/sysctl.d/ above
 - name: Remove any existing net.ipv6.conf.*.disable_ipv6 lines from /etc/sysctl.conf
   ansible.builtin.sysctl:
@@ -67,10 +55,27 @@
     - { name: "net.ipv6.conf.all.disable_ipv6" }
     - { name: "net.ipv6.conf.default.disable_ipv6" }
     - { name: "net.ipv6.conf.lo.disable_ipv6" }
+  register: remove_sysctl_ipv6
+
+- name: Disable IPv6 in sysctl
+  ansible.builtin.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    sysctl_file: /etc/sysctl.d/99-disable-ipv6.conf
+    reload: false
+  loop:
+    - { name: "net.ipv6.conf.all.disable_ipv6", value: "1" }
+    - { name: "net.ipv6.conf.default.disable_ipv6", value: "1" }
+    - { name: "net.ipv6.conf.lo.disable_ipv6", value: "1" }
+  register: add_sysctl_ipv6
 
 - name: Apply sysctl changes
   ansible.builtin.command:
     cmd: sysctl -p
+  when:
+    - add_sysctl_ipv6.changed | default(false) | bool
+    - remove_sysctl_ipv6.changed | default(false) | bool
 
 - name: Set default editor to vim in root profile
   ansible.builtin.lineinfile:
@@ -104,3 +109,36 @@
     line: "alias cp='cp --reflink=auto'"
     create: true
     state: present
+
+- name: Read grub environment
+  ansible.builtin.command:
+    cmd: grub2-editenv - list
+  register: grubenv
+  changed_when: false
+
+- name: Ensure grub menu auto hide is disabled
+  ansible.builtin.command:
+    cmd: grub2-editenv - set menu_auto_hide=0
+  when: "'menu_auto_hide=0' not in grubenv.stdout"
+
+- name: Ensure boot_success is unset
+  ansible.builtin.command:
+    cmd: grub2-editenv - unset boot_success
+  when: "'boot_success=' in grubenv.stdout"
+
+- name: Set grub timeout
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_TIMEOUT='
+    line: 'GRUB_TIMEOUT=30'
+    state: present
+  notify: update grub
+
+- name: Set grub timeout style to menu
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_TIMEOUT_STYLE='
+    line: 'GRUB_TIMEOUT_STYLE=menu'
+    insertafter: '^GRUB_TIMEOUT='
+    state: present
+  notify: update grub
