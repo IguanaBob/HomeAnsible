@@ -1,8 +1,35 @@
 ---
+base_packages:
+  - vim
+  - less
+  - pv
+  - pigz
+  - zstd
+  - btop
+  - file
+  - postfix
+  - smartmontools
+  - rsync
+  - tar
+  - screen
+  - htop
+  - bash-completion
+  - curl
+  - wget
+  - btop
+  - btrfs-progs
+  - tar
+base_packages_rhel:
+  - compsize
+  - yum-utils
+base_packages_debian:
+  - btrfs-compsize
+  - libsasl2-modules
+
 btrfs_compressed_mounts: []
-force_gather_package_facts: True
-pi_firmware_update: False
-mirror_efi: False
+force_gather_package_facts: true
+pi_firmware_update: false
+mirror_efi: false
 efi_src: /boot/efi/
 efi_dest: /boot/efi2/
 btrfs_comp_high: 2

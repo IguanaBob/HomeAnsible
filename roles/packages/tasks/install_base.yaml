@@ -5,10 +5,10 @@
 
 - name: Set base_packages_distro for Ubuntu/Debian
   ansible.builtin.set_fact:
-    base_packages_distro: "{{ base_packages_ubuntu }}"
+    base_packages_distro: "{{ base_packages_debian }}"
   when: ansible_facts['os_family'] == 'Debian'
 
-- name: Set base_packages_distro for RHEL/Alma
+- name: Set base_packages_distro for RHEL/Alma/Rocky
   ansible.builtin.set_fact:
     base_packages_distro: "{{ base_packages_rhel }}"
   when: ansible_facts['os_family'] == 'RedHat'
