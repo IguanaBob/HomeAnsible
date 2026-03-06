@@ -1,0 +1,11 @@
+---
+luks_disks: []
+luks_yubikey_fido2: false
+luks_yubikey_chalresp: false
+luks_usb_key: false
+
+ykl_required_packages_rhel:
+  - cryptsetup
+  - systemd-udev
+  - libfido2
+

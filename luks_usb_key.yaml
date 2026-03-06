@@ -12,3 +12,5 @@
       include_role:
         name: usb_luks
         tasks_from: add_usb_key.yaml
+      when: 
+        - luks_usb_key | default(false) | bool

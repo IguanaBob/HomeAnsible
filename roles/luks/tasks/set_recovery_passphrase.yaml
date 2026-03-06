@@ -1,0 +1,14 @@
+- name: Add recovery passphrase to luks
+  community.crypto.luks_device:
+    device: "/dev/disk/by-id/{{ item }}"
+    new_passphrase: "{{ luks_recovery_passphrase }}"
+    passphrase: "{{ autoinstall_luks_passphrase }}"
+  with_items: "{{ luks_disks }}"
+  no_log: true
+
+- name: Remove deployment passphrase
+  community.crypto.luks_device:
+    device: "/dev/disk/by-id/{{ item }}"
+    remove_passphrase: "{{ autoinstall_luks_passphrase }}"
+  with_items: "{{ luks_disks }}"
+  no_log: true

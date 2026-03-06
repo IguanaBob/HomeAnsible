@@ -1,0 +1,17 @@
+---
+- name: Change LUKS default passphrase
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - "private/vars/luks_common.yaml"
+  tasks:
+
+    - name: Change luks recovery passphrase
+      include_role:
+        name: luks
+        tasks_from: set_recovery_passphrase.yaml
+      when: >
+        (luks_yubikey_fido2 | default(false) | bool) or
+        (luks_yubikey_chalresp | default(false) | bool) or
+        (luks_usb_key | default(false) | bool)
