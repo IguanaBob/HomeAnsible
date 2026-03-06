@@ -5,14 +5,18 @@
     state: restarted
   listen: restart timesyncd
 
-- name: Regenerate grub config
+- name: Regenerate grub config (RHEL/Alma)
   ansible.builtin.command:
     cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
   when: ansible_facts['os_family'] == 'RedHat'
-  listen: update grub
+  listen:
+    - Regenerate grub config
+    - update grub
 
-- name: Regenerate grub config
+- name: Regenerate grub config (Ubuntu/Debian)
   ansible.builtin.command:
     cmd: update-grub
   when: ansible_facts['os_family'] == 'Debian'
-  listen: update grub
+  listen:
+    - Regenerate grub config
+    - update grub
