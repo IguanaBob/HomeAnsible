@@ -9,3 +9,660 @@ ykl_required_packages_rhel:
   - systemd-udev
   - libfido2
 
+   # - python3-pip
+  # - epel-release
+  # - python3-yubico
+  # - ykpers
+  # - gcc
+  # - make
+  # - pcsc-lite-devel
+  # - python3-devel
+  # - swig
+  # - ccid
+  # - zstd
+
+# sudo pip install setuptools wheel pip
+# pip install --user yubikey-manager
+
+
+
+
+# on@gatewaylaptop:~$ ssh jon@memoryalpha
+# jon@192.168.12.21's password: 
+
+# 1 device has a firmware upgrade available.
+# Run `fwupdmgr get-upgrades` for more information.
+
+# Last login: Sat Feb 28 17:30:09 2026 from 192.168.12.118
+# [jon@memoryalpha ~]$ cryptsetup --help | grep -i fido
+# [jon@memoryalpha ~]$ ykman 
+# Usage: ykman [OPTIONS] COMMAND [ARGS]...
+
+#   Configure your YubiKey via the command line.
+
+#   Examples:
+
+#     List connected YubiKeys, only output serial number:
+#     $ ykman list --serials
+
+#     Show information about YubiKey with serial number 123456:
+#     $ ykman --device 123456 info
+
+# Options:
+#   -d, --device SERIAL             specify which YubiKey to interact with by serial number
+#   -r, --reader NAME               specify a YubiKey by smart card reader name (can't be used with --device or list)
+#   -t, --scp-ca FILENAME           specify the CA to use to verify the SCP11 card key (CA-KLCC)
+#   -s, --scp CRED                  specify private key and certificate chain for secure messaging, can be used multiple times to provide key and certificates in multiple files (private key, certificates in leaf-last order), OR SCP03 keys in hex separated by colon (:) K-ENC:K-MAC[:K-DEK]
+#   -p, --scp-password PASSWORD     specify a password required to access the --scp file, if needed
+#   -l, --log-level [error|warning|info|debug|traffic]
+#                                   enable logging at given verbosity level
+#   --log-file FILE                 write log to FILE instead of printing to stderr (requires --log-level)
+#   --diagnose                      show diagnostics information useful for troubleshooting
+#   -v, --version                   show version information about the app
+#   --full-help                     show --help output, including hidden commands
+#   -h, --help                      show this message and exit
+
+# Commands:
+#   info     show general information
+#   list     list connected YubiKeys
+#   script   run a python script
+#   config   configure the YubiKey, enable or disable applications
+#   fido     manage the FIDO applications
+#   hsmauth  manage the YubiHSM Auth application
+#   oath     manage the OATH application
+#   openpgp  manage the OpenPGP application
+#   otp      manage the YubiOTP application
+#   piv      manage the PIV application
+# [jon@memoryalpha ~]$ ykman fido --help
+# Usage: ykman fido [OPTIONS] COMMAND [ARGS]...
+
+#   Manage the FIDO applications.
+
+#   Examples:
+
+#     Reset the FIDO (FIDO2 and U2F) applications:
+#     $ ykman fido reset
+
+#     Change the FIDO2 PIN from 123456 to 654321:
+#     $ ykman fido access change-pin --pin 123456 --new-pin 654321
+
+# Options:
+#   -h, --help  show this message and exit
+
+# Commands:
+#   info          display general status of the FIDO2 application
+#   reset         reset all FIDO applications
+#   access        manage the PIN for FIDO
+#   config        manage FIDO configuration
+#   credentials   manage discoverable (resident) credentials
+#   fingerprints  manage fingerprints
+# [jon@memoryalpha ~]$ ykman fido info
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# AAGUID:             2fc0579f-8113-47ea-b116-bb5a8db9202a
+# PIN:                5 attempt(s) remaining
+# Minimum PIN length: 4
+# [jon@memoryalpha ~]$ sudo systemctl status pcscd
+# [sudo] password for jon: 
+# Sorry, try again.
+# [sudo] password for jon: 
+# Sorry, try again.
+# [sudo] password for jon: 
+# ● pcscd.service - PC/SC Smart Card Daemon
+#      Loaded: loaded (/usr/lib/systemd/system/pcscd.service; indirect; preset: disabled)
+#      Active: active (running) since Sat 2026-02-28 18:57:49 CST; 55s ago
+#  Invocation: f69939ddfeaf4c46b4ce80940a2536f7
+# TriggeredBy: ● pcscd.socket
+#        Docs: man:pcscd(8)
+#    Main PID: 38976 (pcscd)
+#       Tasks: 8 (limit: 203735)
+#      Memory: 1.9M (peak: 3.1M)
+#         CPU: 34ms
+#      CGroup: /system.slice/pcscd.service
+#              └─38976 /usr/sbin/pcscd --foreground --auto-exit
+
+# Feb 28 18:57:49 memoryalpha systemd[1]: Started pcscd.service - PC/SC Smart Card Daemon.
+# Feb 28 18:57:49 memoryalpha (pcscd)[38976]: pcscd.service: Referenced but unset environment variable evaluates to an empty string: PCSCD_ARGS
+# Feb 28 18:57:49 memoryalpha pcscd[38976]: 00000000 ../src/auth.c:145:IsClientAuthorized() Process 38975 (user: 1000) is NOT authorized for action: access_pcsc
+# Feb 28 18:57:49 memoryalpha pcscd[38976]: 00000085 ../src/winscard_svc.c:355:ContextThread() Rejected unauthorized PC/SC client
+# Feb 28 18:57:50 memoryalpha pcscd[38976]: 00216910 ../src/auth.c:145:IsClientAuthorized() Process 38975 (user: 1000) is NOT authorized for action: access_pcsc
+# Feb 28 18:57:50 memoryalpha pcscd[38976]: 00000081 ../src/winscard_svc.c:355:ContextThread() Rejected unauthorized PC/SC client
+# [jon@memoryalpha ~]$ sudo systemctl restart pcscd
+# [jon@memoryalpha ~]$ sudo systemctl enable pcscd
+# [jon@memoryalpha ~]$ ykman fido info
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# AAGUID:             2fc0579f-8113-47ea-b116-bb5a8db9202a
+# PIN:                5 attempt(s) remaining
+# Minimum PIN length: 4
+# [jon@memoryalpha ~]$ sudo systemctl disable pcscd
+# Removed '/etc/systemd/system/sockets.target.wants/pcscd.socket'.
+# Disabling 'pcscd.service', but its triggering units are still active:
+# pcscd.socket
+# [jon@memoryalpha ~]$ lsblk
+# NAME                                          MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+# sda                                             8:0    0   7.5G  0 disk  
+# └─sda1                                          8:1    0     7G  0 part  
+#   └─luks-d8ec462e-8a5f-4b58-87ac-18991c37e24e 253:0    0     7G  0 crypt [SWAP]
+# sdb                                             8:16   0 232.9G  0 disk  
+# ├─sdb1                                          8:17   0     1G  0 part  /boot/efi2
+# ├─sdb2                                          8:18   0   100G  0 part  
+# │ └─luks-bf4a138d-85f0-4dd0-9235-170f6aa92742 253:1    0   100G  0 crypt /
+# └─sdb3                                          8:19   0     2G  0 part  /boot
+# sdc                                             8:32   0 119.2G  0 disk  
+# ├─sdc1                                          8:33   0     1G  0 part  /boot/efi
+# ├─sdc2                                          8:34   0   100G  0 part  
+# │ └─luks-6c480cba-db05-43d4-b1c5-4d0e70b56482 253:2    0   100G  0 crypt 
+# └─sdc3                                          8:35   0     2G  0 part  
+# sdd                                             8:48   0   3.6T  0 disk  
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+# 🔐 Please enter current passphrase for disk /dev/sdb2: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••••                  
+# Token PIN is currently blocked, please remove and reinsert token.
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+# 🔐 Please enter current passphrase for disk /dev/sdb2: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••••                  
+# PIN incorrect, please try again.
+# 🔐 Please enter security token PIN: ••••••                  
+# PIN incorrect, please try again.
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+
+# New FIDO2 token enrolled as key slot 1.
+# [jon@memoryalpha ~]$ ykman fido info
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# AAGUID:             2fc0579f-8113-47ea-b116-bb5a8db9202a
+# PIN:                8 attempt(s) remaining
+# Minimum PIN length: 4
+# [jon@memoryalpha ~]$ sudo cryptsetup luksDump /dev/sdb2
+# LUKS header information
+# Version:       	2
+# Epoch:         	6
+# Metadata area: 	16384 [bytes]
+# Keyslots area: 	16744448 [bytes]
+# UUID:          	bf4a138d-85f0-4dd0-9235-170f6aa92742
+# Label:         	(no label)
+# Subsystem:     	(no subsystem)
+# Flags:       	allow-discards 
+
+# Data segments:
+#   0: crypt
+# 	offset: 16777216 [bytes]
+# 	length: (whole device)
+# 	cipher: aes-xts-plain64
+# 	sector: 512 [bytes]
+
+# Keyslots:
+#   0: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      argon2id
+# 	Time cost:  7
+# 	Memory:     1048576
+# 	Threads:    4
+# 	Salt:       f6 33 0e 1d 8d 63 0b d3 c5 18 bc 7f 1a 8a 55 44 
+# 	            b8 3a 65 2b 6e 93 85 09 0a 25 1b c2 e5 6b 64 bb 
+# 	AF stripes: 4000
+# 	AF hash:    sha256
+# 	Area offset:32768 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+#   1: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      pbkdf2
+# 	Hash:       sha512
+# 	Iterations: 1000
+# 	Salt:       70 d3 b6 94 dc 9a 73 ea 3c b9 c7 fa 5e 4e 9b 85 
+# 	            75 fb 7c 87 3a 5e d7 0d 3a ce c6 e6 bf 1d fc 9a 
+# 	AF stripes: 4000
+# 	AF hash:    sha512
+# 	Area offset:290816 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+# Tokens:
+#   0: systemd-fido2
+# 	fido2-credential:
+# 	            c4 5b 6f 1c 56 c9 ac a7 51 8e 89 6d cf 6b 93 c9
+# 	            2b 4c 64 46 82 e1 52 46 98 fb ee 68 7d 24 24 57
+# 	            65 4e 0f 47 c1 c2 86 b8 94 d6 91 f5 7f ee f8 bd
+# 	            32 eb bb c4 c5 26 25 46 c6 6b e9 c3 88 2e a5 41
+# 	fido2-salt: 86 f9 2c e2 b6 15 4f 1e 3d 56 3e f6 5e 2f a0 6f
+# 	            22 59 4f fa 79 9f 86 ff 91 a6 18 21 ba 0e 1b 6d
+# 	fido2-rp:   io.systemd.cryptsetup
+# 	fido2-clientPin-required:
+# 	            true
+# 	fido2-up-required:
+# 	            true
+# 	fido2-uv-required:
+# 	            false
+# 	Keyslot:    1
+# Digests:
+#   0: pbkdf2
+# 	Hash:       sha256
+# 	Iterations: 142314
+# 	Salt:       f7 e9 9d 4e b7 da 7f 33 b8 bd 13 f0 3d 15 a0 15 
+# 	            92 e8 37 8a 54 c6 f2 2a 5c ad 6c dc 3d 59 bd 94 
+# 	Digest:     79 d3 9d 16 b2 d1 bf 0a a0 08 ba 01 45 31 59 58 
+# 	            89 73 0a 45 d3 e3 29 2d 3b b8 5a 3a 45 02 da 6f 
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll /dev/sdb2
+# SLOT TYPE    
+#    0 password
+#    1 fido2
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+# 🔐 Please enter current passphrase for disk /dev/sdb2: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+# New FIDO2 token enrolled as key slot 2.
+# [jon@memoryalpha ~]$ ykman fido info
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# AAGUID:             2fc0579f-8113-47ea-b116-bb5a8db9202a
+# PIN:                8 attempt(s) remaining
+# Minimum PIN length: 4
+# [jon@memoryalpha ~]$ sudo cryptsetup luksDump /dev/sdb2
+# LUKS header information
+# Version:       	2
+# Epoch:         	8
+# Metadata area: 	16384 [bytes]
+# Keyslots area: 	16744448 [bytes]
+# UUID:          	bf4a138d-85f0-4dd0-9235-170f6aa92742
+# Label:         	(no label)
+# Subsystem:     	(no subsystem)
+# Flags:       	allow-discards 
+
+# Data segments:
+#   0: crypt
+# 	offset: 16777216 [bytes]
+# 	length: (whole device)
+# 	cipher: aes-xts-plain64
+# 	sector: 512 [bytes]
+
+# Keyslots:
+#   0: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      argon2id
+# 	Time cost:  7
+# 	Memory:     1048576
+# 	Threads:    4
+# 	Salt:       f6 33 0e 1d 8d 63 0b d3 c5 18 bc 7f 1a 8a 55 44 
+# 	            b8 3a 65 2b 6e 93 85 09 0a 25 1b c2 e5 6b 64 bb 
+# 	AF stripes: 4000
+# 	AF hash:    sha256
+# 	Area offset:32768 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+#   1: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      pbkdf2
+# 	Hash:       sha512
+# 	Iterations: 1000
+# 	Salt:       70 d3 b6 94 dc 9a 73 ea 3c b9 c7 fa 5e 4e 9b 85 
+# 	            75 fb 7c 87 3a 5e d7 0d 3a ce c6 e6 bf 1d fc 9a 
+# 	AF stripes: 4000
+# 	AF hash:    sha512
+# 	Area offset:290816 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+#   2: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      pbkdf2
+# 	Hash:       sha512
+# 	Iterations: 1000
+# 	Salt:       5e 6f 83 85 fc 29 be 6b 20 95 ba 37 d1 d6 52 61 
+# 	            23 cd 3e a2 2f f4 7c 47 b4 ec ba 4e d4 8e 6b ea 
+# 	AF stripes: 4000
+# 	AF hash:    sha512
+# 	Area offset:548864 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+# Tokens:
+#   0: systemd-fido2
+# 	fido2-credential:
+# 	            c4 5b 6f 1c 56 c9 ac a7 51 8e 89 6d cf 6b 93 c9
+# 	            2b 4c 64 46 82 e1 52 46 98 fb ee 68 7d 24 24 57
+# 	            65 4e 0f 47 c1 c2 86 b8 94 d6 91 f5 7f ee f8 bd
+# 	            32 eb bb c4 c5 26 25 46 c6 6b e9 c3 88 2e a5 41
+# 	fido2-salt: 86 f9 2c e2 b6 15 4f 1e 3d 56 3e f6 5e 2f a0 6f
+# 	            22 59 4f fa 79 9f 86 ff 91 a6 18 21 ba 0e 1b 6d
+# 	fido2-rp:   io.systemd.cryptsetup
+# 	fido2-clientPin-required:
+# 	            true
+# 	fido2-up-required:
+# 	            true
+# 	fido2-uv-required:
+# 	            false
+# 	Keyslot:    1
+#   1: systemd-fido2
+# 	fido2-credential:
+# 	            d8 0c cc 74 67 3c 08 23 d3 c7 63 15 dd 44 f0 0f
+# 	            8b c5 70 39 52 67 5f ff 01 f4 b6 8d 2d f4 1c a1
+# 	            c1 91 c0 19 0b d4 b0 71 a4 ec aa 43 e1 f6 54 7b
+# 	            3d ca 5a 2d 6f 88 09 9e e8 35 1a 16 43 66 5e 31
+# 	fido2-salt: 87 8e 86 0f eb 7b a0 32 b4 72 8f 23 d9 8e 5e 2f
+# 	            5b 32 68 e6 94 96 4d 26 17 05 94 6b 58 42 08 af
+# 	fido2-rp:   io.systemd.cryptsetup
+# 	fido2-clientPin-required:
+# 	            true
+# 	fido2-up-required:
+# 	            true
+# 	fido2-uv-required:
+# 	            false
+# 	Keyslot:    2
+# Digests:
+#   0: pbkdf2
+# 	Hash:       sha256
+# 	Iterations: 142314
+# 	Salt:       f7 e9 9d 4e b7 da 7f 33 b8 bd 13 f0 3d 15 a0 15 
+# 	            92 e8 37 8a 54 c6 f2 2a 5c ad 6c dc 3d 59 bd 94 
+# 	Digest:     79 d3 9d 16 b2 d1 bf 0a a0 08 ba 01 45 31 59 58 
+# 	            89 73 0a 45 d3 e3 29 2d 3b b8 5a 3a 45 02 da 6f 
+# [jon@memoryalpha ~]$ history
+#     1  pip install --user yubikey-manager
+#     2  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel pcsclite ccid
+#     3  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel ccid
+#     4  pip install --user yubikey-manager
+#     5  cryptsetup --help | grep -i fido
+#     6  ykman 
+#     7  ykman fido --help
+#     8  ykman fido info
+#     9  sudo systemctl status pcscd
+#    10  sudo systemctl restart pcscd
+#    11  sudo systemctl enable pcscd
+#    12  ykman fido info
+#    13  sudo systemctl disable pcscd
+#    14  lsblk
+#    15  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    16  ykman fido info
+#    17  sudo cryptsetup luksDump /dev/sdb2
+#    18  sudo systemd-cryptenroll /dev/sdb2
+#    19  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    20  ykman fido info
+#    21  sudo cryptsetup luksDump /dev/sdb2
+#    22  history
+# [jon@memoryalpha ~]$     1  pip install --user yubikey-manager
+#     2  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel pcsclite ccid
+#     3  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel ccid
+#     4  pip install --user yubikey-manager
+#     5  cryptsetup --help | grep -i fido
+#     6  ykman 
+#     7  ykman fido --help
+#     8  ykman fido info
+#     9  sudo systemctl status pcscd
+#    10  sudo systemctl restart pcscd
+#    11  sudo systemctl enable pcscd
+#    12  ykman fido info
+#    13  sudo systemctl disable pcscd
+#    14  lsblk
+#    15  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    16  ykman fido info
+#    17  sudo cryptsetup luksDump /dev/sdb2
+#    18  sudo systemd-cryptenroll /dev/sdb2
+#    19  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    20  ykman fido info
+
+
+
+
+
+
+# New FIDO2 token enrolled as key slot 2.
+# [jon@memoryalpha ~]$ ykman fido info
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# AAGUID:             2fc0579f-8113-47ea-b116-bb5a8db9202a
+# PIN:                8 attempt(s) remaining
+# Minimum PIN length: 4
+# [jon@memoryalpha ~]$ sudo cryptsetup luksDump /dev/sdb2
+# LUKS header information
+# Version:       	2
+# Epoch:         	8
+# Metadata area: 	16384 [bytes]
+# Keyslots area: 	16744448 [bytes]
+# UUID:          	bf4a138d-85f0-4dd0-9235-170f6aa92742
+# Label:         	(no label)
+# Subsystem:     	(no subsystem)
+# Flags:       	allow-discards 
+
+# Data segments:
+#   0: crypt
+# 	offset: 16777216 [bytes]
+# 	length: (whole device)
+# 	cipher: aes-xts-plain64
+# 	sector: 512 [bytes]
+
+# Keyslots:
+#   0: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      argon2id
+# 	Time cost:  7
+# 	Memory:     1048576
+# 	Threads:    4
+# 	Salt:       f6 33 0e 1d 8d 63 0b d3 c5 18 bc 7f 1a 8a 55 44 
+# 	            b8 3a 65 2b 6e 93 85 09 0a 25 1b c2 e5 6b 64 bb 
+# 	AF stripes: 4000
+# 	AF hash:    sha256
+# 	Area offset:32768 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+#   1: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      pbkdf2
+# 	Hash:       sha512
+# 	Iterations: 1000
+# 	Salt:       70 d3 b6 94 dc 9a 73 ea 3c b9 c7 fa 5e 4e 9b 85 
+# 	            75 fb 7c 87 3a 5e d7 0d 3a ce c6 e6 bf 1d fc 9a 
+# 	AF stripes: 4000
+# 	AF hash:    sha512
+# 	Area offset:290816 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+#   2: luks2
+# 	Key:        512 bits
+# 	Priority:   normal
+# 	Cipher:     aes-xts-plain64
+# 	Cipher key: 512 bits
+# 	PBKDF:      pbkdf2
+# 	Hash:       sha512
+# 	Iterations: 1000
+# 	Salt:       5e 6f 83 85 fc 29 be 6b 20 95 ba 37 d1 d6 52 61 
+# 	            23 cd 3e a2 2f f4 7c 47 b4 ec ba 4e d4 8e 6b ea 
+# 	AF stripes: 4000
+# 	AF hash:    sha512
+# 	Area offset:548864 [bytes]
+# 	Area length:258048 [bytes]
+# 	Digest ID:  0
+# Tokens:
+#   0: systemd-fido2
+# 	fido2-credential:
+# 	            c4 5b 6f 1c 56 c9 ac a7 51 8e 89 6d cf 6b 93 c9
+# 	            2b 4c 64 46 82 e1 52 46 98 fb ee 68 7d 24 24 57
+# 	            65 4e 0f 47 c1 c2 86 b8 94 d6 91 f5 7f ee f8 bd
+# 	            32 eb bb c4 c5 26 25 46 c6 6b e9 c3 88 2e a5 41
+# 	fido2-salt: 86 f9 2c e2 b6 15 4f 1e 3d 56 3e f6 5e 2f a0 6f
+# 	            22 59 4f fa 79 9f 86 ff 91 a6 18 21 ba 0e 1b 6d
+# 	fido2-rp:   io.systemd.cryptsetup
+# 	fido2-clientPin-required:
+# 	            true
+# 	fido2-up-required:
+# 	            true
+# 	fido2-uv-required:
+# 	            false
+# 	Keyslot:    1
+#   1: systemd-fido2
+# 	fido2-credential:
+# 	            d8 0c cc 74 67 3c 08 23 d3 c7 63 15 dd 44 f0 0f
+# 	            8b c5 70 39 52 67 5f ff 01 f4 b6 8d 2d f4 1c a1
+# 	            c1 91 c0 19 0b d4 b0 71 a4 ec aa 43 e1 f6 54 7b
+# 	            3d ca 5a 2d 6f 88 09 9e e8 35 1a 16 43 66 5e 31
+# 	fido2-salt: 87 8e 86 0f eb 7b a0 32 b4 72 8f 23 d9 8e 5e 2f
+# 	            5b 32 68 e6 94 96 4d 26 17 05 94 6b 58 42 08 af
+# 	fido2-rp:   io.systemd.cryptsetup
+# 	fido2-clientPin-required:
+# 	            true
+# 	fido2-up-required:
+# 	            true
+# 	fido2-uv-required:
+# 	            false
+# 	Keyslot:    2
+# Digests:
+#   0: pbkdf2
+# 	Hash:       sha256
+# 	Iterations: 142314
+# 	Salt:       f7 e9 9d 4e b7 da 7f 33 b8 bd 13 f0 3d 15 a0 15 
+# 	            92 e8 37 8a 54 c6 f2 2a 5c ad 6c dc 3d 59 bd 94 
+# 	Digest:     79 d3 9d 16 b2 d1 bf 0a a0 08 ba 01 45 31 59 58 
+# 	            89 73 0a 45 d3 e3 29 2d 3b b8 5a 3a 45 02 da 6f 
+# [jon@memoryalpha ~]$ history
+#     1  pip install --user yubikey-manager
+#     2  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel pcsclite ccid
+#     3  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel ccid
+#     4  pip install --user yubikey-manager
+#     5  cryptsetup --help | grep -i fido
+#     6  ykman 
+#     7  ykman fido --help
+#     8  ykman fido info
+#     9  sudo systemctl status pcscd
+#    10  sudo systemctl restart pcscd
+#    11  sudo systemctl enable pcscd
+#    12  ykman fido info
+#    13  sudo systemctl disable pcscd
+#    14  lsblk
+#    15  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    16  ykman fido info
+#    17  sudo cryptsetup luksDump /dev/sdb2
+#    18  sudo systemd-cryptenroll /dev/sdb2
+#    19  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    20  ykman fido info
+#    21  sudo cryptsetup luksDump /dev/sdb2
+#    22  history
+# [jon@memoryalpha ~]$     1  pip install --user yubikey-manager
+#     2  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel pcsclite ccid
+#     3  sudo dnf install -y gcc python3-devel swig pcsc-lite-devel ccid
+#     4  pip install --user yubikey-manager
+#     5  cryptsetup --help | grep -i fido
+#     6  ykman 
+#     7  ykman fido --help
+#     8  ykman fido info
+#     9  sudo systemctl status pcscd
+#    10  sudo systemctl restart pcscd
+#    11  sudo systemctl enable pcscd
+#    12  ykman fido info
+#    13  sudo systemctl disable pcscd
+#    14  lsblk
+#    15  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    16  ykman fido info
+#    17  sudo cryptsetup luksDump /dev/sdb2
+#    18  sudo systemd-cryptenroll /dev/sdb2
+#    19  sudo systemd-cryptenroll --fido2-device=auto /dev/sdb2
+#    20  ykman fido info
+#    21  sudo crypts^C
+# [jon@memoryalpha ~]$ sudo cryptsetup luksChangeKey --key-slot 0 /dev/sdb2
+# Enter passphrase to be changed: 
+# Enter new passphrase: Error reading passphrase from terminal.
+# [jon@memoryalpha ~]$ sudo cryptsetup luksChangeKey --key-slot 0 /dev/sdb2
+# Enter passphrase to be changed: 
+# Enter new passphrase: 
+# Verify passphrase: 
+# [jon@memoryalpha ~]$ ls /dev/mapper/
+# control  luks-6c480cba-db05-43d4-b1c5-4d0e70b56482  luks-bf4a138d-85f0-4dd0-9235-170f6aa92742  luks-d8ec462e-8a5f-4b58-87ac-18991c37e24e
+# [jon@memoryalpha ~]$ lsblk 
+# NAME                                          MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+# sda                                             8:0    0   7.5G  0 disk  
+# └─sda1                                          8:1    0     7G  0 part  
+#   └─luks-d8ec462e-8a5f-4b58-87ac-18991c37e24e 253:0    0     7G  0 crypt [SWAP]
+# sdb                                             8:16   0 232.9G  0 disk  
+# ├─sdb1                                          8:17   0     1G  0 part  /boot/efi2
+# ├─sdb2                                          8:18   0   100G  0 part  
+# │ └─luks-bf4a138d-85f0-4dd0-9235-170f6aa92742 253:1    0   100G  0 crypt /
+# └─sdb3                                          8:19   0     2G  0 part  /boot
+# sdc                                             8:32   0 119.2G  0 disk  
+# ├─sdc1                                          8:33   0     1G  0 part  /boot/efi
+# ├─sdc2                                          8:34   0   100G  0 part  
+# │ └─luks-6c480cba-db05-43d4-b1c5-4d0e70b56482 253:2    0   100G  0 crypt 
+# └─sdc3                                          8:35   0     2G  0 part  
+# sdd                                             8:48   0   3.6T  0 disk  
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sdc2
+# 🔐 Please enter current passphrase for disk /dev/sdc2: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+# New FIDO2 token enrolled as key slot 1.
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sda1
+# 🔐 Please enter current passphrase for disk /dev/sda1: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+# New FIDO2 token enrolled as key slot 1.
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sda1
+# 🔐 Please enter current passphrase for disk /dev/sda1: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+# New FIDO2 token enrolled as key slot 2.
+# [jon@memoryalpha ~]$ sudo systemd-cryptenroll --fido2-device=auto /dev/sdc2
+# 🔐 Please enter current passphrase for disk /dev/sdc2: •••••••••••••••••••••••••
+# Initializing FIDO2 credential on security token.
+# 👆 (Hint: This might require confirmation of user presence on security token.)
+# 🔐 Please enter security token PIN: ••••                    
+# Generating secret key on FIDO2 security token.
+# 👆 In order to allow secret key generation, please confirm presence on security token.
+# New FIDO2 token enrolled as key slot 2.
+# [jon@memoryalpha ~]$ sudo cryptsetup luksChangeKey --key-slot 0 /dev/sdc2
+# Enter passphrase to be changed: 
+# Enter new passphrase: 
+# Verify passphrase: 
+# [jon@memoryalpha ~]$ sudo cryptsetup luksChangeKey --key-slot 0 /dev/sda1
+# Enter passphrase to be changed: 
+# Enter new passphrase: 
+# Verify passphrase: 
+# [jon@memoryalpha ~]$ ykman fido^C
+# [jon@memoryalpha ~]$ ykman fido credentials list
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# Enter your PIN: 
+# Credential ID  RP ID  Username  Display name
+# [jon@memoryalpha ~]$ ykman fido credentials list
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# Enter your PIN: 
+# ERROR: Wrong PIN.
+# [jon@memoryalpha ~]$ ykman fido credentials list
+# WARNING: PC/SC not available. Smart card (CCID) protocols will not function.
+# ERROR: Unable to list devices for connection
+# Enter your PIN: 
+# Credential ID  RP ID  Username  Display name

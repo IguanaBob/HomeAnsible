@@ -37,6 +37,12 @@
         tasks_from: install_fonts.yaml
       when: install_fonts | default(false) | bool
 
+    - name: Install Inkscape
+      include_role:
+        name: inkscape
+        tasks_from: main.yaml
+      when: install_inkscape | default(false) | bool
+
     - name: UNbuntify
       include_role:
         name: debloat
