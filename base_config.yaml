@@ -31,6 +31,12 @@
         vars_from: server.yaml
       when: nfs_server | default(false) | bool
 
+    - name: Install fonts
+      include_role:
+        name: fonts
+        tasks_from: install_fonts.yaml
+      when: install_fonts | default(false) | bool
+
     - name: UNbuntify
       include_role:
         name: debloat

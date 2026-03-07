@@ -1,0 +1,18 @@
+---
+- name: Ensure custom font directory exists
+  ansible.builtin.file:
+    path: /usr/local/share/fonts/custom
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Sync fonts from controller and delete extras
+  ansible.posix.synchronize:
+    src: /mnt/raid/fonts/
+    dest: /usr/local/share/fonts/custom/
+    archive: true
+    delete: true
+    rsync_path: "sudo rsync"
+    rsync_opts:
+      - "--chmod=F644,D755"

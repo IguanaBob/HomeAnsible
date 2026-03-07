@@ -1,0 +1,12 @@
+---
+- name: Install fonts
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+
+    - name: Install fonts
+      include_role:
+        name: fonts
+        tasks_from: install_fonts.yaml
+
