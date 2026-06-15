@@ -10,4 +10,6 @@
 - name: Mark reboot needed after package installation
   set_fact:
     reboot_needed: true
-  listen: reboot needed
+  listen: 
+    - reboot needed
+    - Reboot system
