@@ -1,5 +1,7 @@
 [Unit]
 Wants=network.target
+After=network.target dev-video0.device
+StartLimitIntervalSec=0
 
 [Service]
 User=mediamtx
@@ -7,6 +9,7 @@ Group=mediamtx
 ExecStart=/usr/local/bin/mediamtx /usr/local/etc/mediamtx.yml
 WorkingDirectory=/usr/local/etc
 Restart=always
+RestartSec=5
 LimitNOFILE=65536
 
 [Install]
